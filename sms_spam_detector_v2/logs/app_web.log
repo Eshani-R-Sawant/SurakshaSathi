@@ -1,0 +1,50 @@
+[App] Loading model from final_model_20260706_123010 …
+[SMSAnalyzer] threshold=0.5862 (from training)
+Loading weights:   0%|          | 0/25 [00:00<?, ?it/s]Loading weights: 100%|██████████| 25/25 [00:00<00:00, 26790.39it/s]
+[transformers] [1mAlbertModel LOAD REPORT[0m from: ai4bharat/indic-bert
+Key                              | Status     |  | 
+---------------------------------+------------+--+-
+predictions.bias                 | UNEXPECTED |  | 
+predictions.LayerNorm.bias       | UNEXPECTED |  | 
+predictions.dense.weight         | UNEXPECTED |  | 
+sop_classifier.classifier.weight | UNEXPECTED |  | 
+predictions.decoder.weight       | UNEXPECTED |  | 
+predictions.LayerNorm.weight     | UNEXPECTED |  | 
+sop_classifier.classifier.bias   | UNEXPECTED |  | 
+predictions.dense.bias           | UNEXPECTED |  | 
+predictions.decoder.bias         | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[SMSAnalyzer] weights loaded from final_model_20260706_123010/model.safetensors
+[App] Model loaded.
+[App] LLM_BACKEND not set. Set it to anthropic|openai|gemini|ollama to enable LLM panel.
+
+====================================================
+  Server ready.
+  Local   :  http://127.0.0.1:18321
+  Android :  http://172.25.1.11:18321   ← open this on your phone
+  Health  :  http://172.25.1.11:18321/health
+  Test    :  http://172.25.1.11:18321/test
+====================================================
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:18321
+ * Running on http://172.25.1.11:18321
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [06/Jul/2026 12:40:55] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:40:55] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:40:55] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:40:56] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:40:56] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:41:14] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:41:14] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 12:41:14] "POST /analyse HTTP/1.1" 200 -
+172.25.1.11 - - [06/Jul/2026 13:20:40] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 15:10:08] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 15:10:09] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 15:10:09] "POST /analyse HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 15:10:09] "POST /analyse HTTP/1.1" 200 -

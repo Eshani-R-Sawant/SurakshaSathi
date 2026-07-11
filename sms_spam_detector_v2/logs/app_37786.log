@@ -1,0 +1,47 @@
+Using model: final_model_20260630_135011/
+========================================================
+Starting web UI for testing
+========================================================
+Skipping import of cpp extensions due to incompatible torch version. Please upgrade to torch >= 2.11.0 (found 2.7.1+cu118).
+[App] Loading model from final_model_20260630_135011/ …
+[SMSAnalyzer] threshold=0.4904 (from training)
+Loading weights:   0%|          | 0/25 [00:00<?, ?it/s]Loading weights: 100%|██████████| 25/25 [00:00<00:00, 22052.07it/s]
+[1mAlbertModel LOAD REPORT[0m from: ai4bharat/indic-bert
+Key                              | Status     |  | 
+---------------------------------+------------+--+-
+sop_classifier.classifier.weight | UNEXPECTED |  | 
+predictions.bias                 | UNEXPECTED |  | 
+predictions.decoder.bias         | UNEXPECTED |  | 
+predictions.LayerNorm.weight     | UNEXPECTED |  | 
+sop_classifier.classifier.bias   | UNEXPECTED |  | 
+predictions.dense.bias           | UNEXPECTED |  | 
+predictions.LayerNorm.bias       | UNEXPECTED |  | 
+predictions.decoder.weight       | UNEXPECTED |  | 
+predictions.dense.weight         | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[SMSAnalyzer] weights loaded from final_model_20260630_135011/model.safetensors
+[App] Model loaded.
+[App] LLM_BACKEND not set. Set it to anthropic|openai|gemini|ollama to enable LLM panel.
+
+====================================================
+  Server ready.
+  Local   :  http://127.0.0.1:8000
+  Android :  http://192.168.11.13:8000   ← open this on your phone
+  Health  :  http://192.168.11.13:8000/health
+  Test    :  http://192.168.11.13:8000/test
+====================================================
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://192.168.11.13:8000
+[33mPress CTRL+C to quit[0m
+192.168.11.10 - - [01/Jul/2026 20:22:46] "GET / HTTP/1.1" 200 -
+192.168.11.10 - - [01/Jul/2026 20:22:46] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+192.168.11.10 - - [01/Jul/2026 20:28:16] "POST /analyse HTTP/1.1" 200 -
+192.168.11.10 - - [01/Jul/2026 20:28:16] "POST /llm_analyse HTTP/1.1" 200 -
+slurmstepd-cn03: error: *** JOB 37786 ON cn03 CANCELLED AT 2026-07-02T08:18:12 DUE TO TIME LIMIT ***

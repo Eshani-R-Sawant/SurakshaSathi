@@ -8,3 +8,10 @@ Rag_model/uvicorn_out.log
 Rag_model/uvicorn_err.log
 Rag_model/*firebase-adminsdk*.json
 Rag_model/google-services.json
+
+# sms_spam_detector_v2
+sms_spam_detector_v2/**/__pycache__/
+sms_spam_detector_v2/**/*.pyc
+sms_spam_detector_v2/checkpoints/
+sms_spam_detector_v2/.venv/
+sms_spam_detector_v2/venv/
