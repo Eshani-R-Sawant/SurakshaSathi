@@ -1,0 +1,128 @@
+"""Shared pydantic models. These mirror the Mongo (Blue DB) collections and the Groq LLM
+structured-output contract, so every module imports the same shape instead of re-declaring it."""
+
+from datetime import datetime
+from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+
+class Channel(str, Enum):
+    sms = "sms"
+    whatsapp = "whatsapp"
+    telegram = "telegram"
+
+
+class ContentType(str, Enum):
+    text_only = "text_only"
+    apk = "apk"
+    url = "url"
+    qr = "qr"
+    callback = "callback"
+
+
+# ---- Blue DB: `messages` collection ----
+# One document per spam-classified message ingested from the Android client.
+class MessageRecord(BaseModel):
+    message_id: str
+    original_message: str
+    language: str                      # ISO 639-1 / BCP-47 tag as detected
+    message_english: Optional[str] = None   # None until translated
+    needs_translation: bool = True
+    channel: Channel = Channel.sms
+    content_type: ContentType = ContentType.text_only
+    region: Optional[str] = None        # normalized state/city, not raw lat-long
+    # persona/message_type are the PRIMARY clustering signal (see clustering/run_clustering.py),
+    # not just descriptive metadata. persona is denormalized from the reporting user's UserMap
+    # (set once at app install); message_type is derived from the message text itself.
+    persona: Optional[str] = None       # see clustering/persona.py for the fixed category set
+    message_type: Optional[str] = None  # see clustering/message_type.py
+    sender: Optional[str] = None
+    cluster_id: Optional[str] = None
+    timestamp: datetime
+    ml_model_metadata: Optional[dict] = None  # from Android client, online-only, never persisted long-term
+
+
+# ---- Blue DB: `clusters` collection ----
+# One document per DenStream micro-cluster / DBSCAN macro-cluster.
+class ClusterRecord(BaseModel):
+    cluster_id: str
+    cluster_type: str                   # "micro" | "macro"
+    parent_macro_cluster_id: Optional[str] = None
+    centroid: list[float]               # PCA-reduced, region-weighted vector
+    weight: float                       # point count (no decay applied, per spec)
+    radius: float
+    sample_message: str                 # representative message text
+    sample_embedding: list[float]
+    region: Optional[str] = None
+    persona: Optional[str] = None       # majority persona among member messages
+    fraud_type: Optional[str] = None    # majority message_type among member messages
+    retrieved_docs: list[str] = Field(default_factory=list)     # doc IDs from the guideline vector store
+    docs_retrieved_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---- Blue DB: `user_map` collection ----
+class UserMapRecord(BaseModel):
+    """Set once at app install (region + persona) -- these two fields get denormalized onto
+    every MessageRecord this user reports, and are the primary clustering signal."""
+    user_id: str
+    region: Optional[str] = None
+    persona: Optional[str] = None  # see clustering/persona.py for the fixed category set
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    is_vulnerable_group: bool = False
+    metadata: dict = Field(default_factory=dict)
+
+
+# ---- Blue DB: `national_digest` collection (cybercrime.gov.in scrape) ----
+class NationalDigestRecord(BaseModel):
+    date: datetime
+    region: str
+    fraud_type: Optional[str] = None
+    report_count: int
+    source: str = "cybercrime.gov.in"
+
+
+# ---- Blue DB: `threat_intel_urls` collection (OpenPhish feed) ----
+class ThreatIntelUrlRecord(BaseModel):
+    url_hash: str
+    url: str
+    first_seen: datetime
+    source: str = "openphish"
+
+
+# ---- RAG input contract (Output 1, per-message) ----
+class RagQueryInput(BaseModel):
+    message_id: str
+    query_message_english: str
+    query_embedding: list[float]
+    retrieved_docs: list[str]
+    ml_model_metadata: Optional[dict] = None   # online-only, from Android client
+    doc_fetch_flag: bool                        # True = fetch fresh docs, False = reuse cluster's cached docs
+
+
+# ---- Groq structured-output contract (both Output 1 and Output 2 use this shape) ----
+class Verdict(str, Enum):
+    block = "BLOCK"
+    quarantine = "QUARANTINE"
+    allow = "ALLOW"
+
+
+class TechnicalEvidence(BaseModel):
+    resolved_destination: Optional[str] = None
+    domain_creation_age: Optional[str] = None
+    quishing_anomaly_detected: bool = False
+    callback_number_verified: bool = False
+
+
+class ThreatReport(BaseModel):
+    verdict: Verdict
+    threat_type: str
+    risk_score: float = Field(ge=0, le=100)
+    suspicious_signals: list[str]
+    technical_evidence: TechnicalEvidence
+    plain_language_explanation: str
+    recommended_action: str
