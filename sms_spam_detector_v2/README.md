@@ -119,9 +119,7 @@ without a phone.
 `investment_trading_fraud` · `telecom_recharge_fraud` ·
 `job_recruitment_fraud` · `other_spam`
 
-## LLM Backends
 
-Set `LLM_BACKEND` env var to one of: `anthropic` · `openai` · `gemini` · `ollama`
 
 ## Files
 
