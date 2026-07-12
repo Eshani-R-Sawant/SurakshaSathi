@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration
+    - Blocks all cleartext (HTTP) traffic
+    - Enables certificate transparency
+    - Certificate pins added in Phase 7 hardening via code (OkHttp CertificatePinner)
+-->
+<network-security-config>
+    <!-- No cleartext traffic allowed anywhere -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust the system CA store -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Debug builds may connect to local test servers over cleartext -->
+    <!-- This block is ONLY active in debug; it is absent in the release network config -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

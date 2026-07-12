@@ -1,0 +1,63 @@
+package com.sbi.surakshasathi.feature.messagescan.domain.model
+
+/**
+ * Source of an incoming message.
+ * Used in the canonical metadata envelope and classification context.
+ */
+enum class MessageSource {
+    SMS,
+    WHATSAPP,
+    TELEGRAM,
+    UNKNOWN,
+}
+
+/**
+ * Classification result for a scanned message.
+ *
+ * Produced by [com.sbi.surakshasathi.feature.messagescan.data.classifier.HybridDecisionEngine].
+ * SAFE     → no action needed
+ * SUSPICIOUS → warn user, escalate to RAG
+ * MALICIOUS  → high-confidence threat, block + alert + escalate to RAG + offer NCRP report
+ */
+enum class MessageClassification {
+    SAFE,
+    SUSPICIOUS,
+    MALICIOUS,
+    UNCLASSIFIED, // Not yet processed
+}
+
+/**
+ * Core domain entity for a received message.
+ *
+ * Domain layer ONLY — zero Android/framework imports.
+ * Stored in Room via [com.sbi.surakshasathi.feature.messagescan.data.local.entity.MessageEntity].
+ *
+ * Retention: bodies are stored max [AppDatabase.MESSAGE_TTL_DAYS] days.
+ * After classification, the body may be replaced with a hash if the user hasn't
+ * consented to body storage (data minimization per DPDP Act 2023).
+ */
+data class Message(
+    val id: Long = 0L,
+    /** Raw message text. May be empty (replaced by bodyHash) after TTL. */
+    val body: String,
+    /** SHA-256 hash of body — retained even after body is purged. */
+    val bodyHash: String,
+    val sender: String,
+    val source: MessageSource,
+    val receivedAtMillis: Long,
+    /** URLs extracted from the message body. */
+    val extractedUrls: List<String> = emptyList(),
+    val classification: MessageClassification = MessageClassification.UNCLASSIFIED,
+    /** 0.0 = definitely safe, 1.0 = definitely malicious */
+    val riskScore: Float = 0f,
+    /** ML model probability contribution (0.0–1.0) */
+    val mlScore: Float = 0f,
+    /** Rule engine contribution (0.0–1.0) */
+    val ruleScore: Float = 0f,
+    /** True if message was escalated to RAG for analysis */
+    val ragEscalated: Boolean = false,
+    /** Localized warning text returned by the RAG agent (Flow 1b), if escalated. */
+    val ragWarningText: String? = null,
+    /** Localized step-by-step guideline returned by the RAG agent, if escalated. */
+    val ragGuidelineText: String? = null,
+)

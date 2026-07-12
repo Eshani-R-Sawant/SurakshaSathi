@@ -1,0 +1,12 @@
+local.properties
+*.jks
+*.keystore
+google-services.json
+.idea/
+.gradle/
+build/
+*.iml
+captures/
+.DS_Store
+Thumbs.db
+*.log
