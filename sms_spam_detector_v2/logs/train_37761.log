@@ -1,0 +1,92 @@
+/var/spool/slurmd/job37761/slurm_script: line 52: 
+set -e
+export LD_LIBRARY_PATH=/opt/ohpc/apps/python/3.10.pytorch/lib:$LD_LIBRARY_PATH
+source /scratch/m25cse012/myenv/bin/activate
+cd /scratch/m25cse012/sms_spam_detector_v2/
+
+export HF_HOME=/scratch/m25cse012/hf_cache
+export HF_DATASETS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
+echo "========================================================"
+echo "Phase 1: Train (versioned output dir, optimal threshold)"
+echo "========================================================"
+python -u src/train.py --config configs/config.yaml
+
+# Find newest versioned model dir
+LATEST=$(ls -dt final_model_*/ 2>/dev/null | head -1)
+[ -z "$LATEST" ] && echo "ERROR: no versioned model dir found" && exit 1
+echo "Latest model: $LATEST"
+
+echo "========================================================"
+echo "Phase 2: Evaluate on internal test set"
+echo "========================================================"
+#python -u src/evaluate.py --config configs/config.yaml --model_path "$LATEST"
+
+echo "========================================================"
+echo "Phase 3: Evaluate on external datasets"
+echo "========================================================"
+#for csv in data/raw/*.csv; do
+ # echo "  Evaluating on $csv"
+  #python -u src/evaluate.py --config configs/config.yaml \
+   # --model_path "$LATEST" --custom_test "$csv"
+#done
+
+echo "========================================================"
+echo "Phase 4: Quantize for mobile deployment"
+echo "========================================================"
+#python -u src/quantize.py --config configs/config.yaml \
+#  --model_path "$LATEST" --output_dir "${LATEST}_quantized"
+: No such file or directory
+========================================================
+Phase 5: Cluster spam messages by fraud type
+========================================================
+[Cluster] Reading data/raw/synthetic_fake_app_dataset_v2.csv …
+[Cluster] Total=5000  SPAM=3500  HAM(excluded)=1500
+[Cluster] Loading paraphrase-multilingual-MiniLM-L12-v2 …
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 8587.37it/s]
+Batches:   0%|          | 0/55 [00:00<?, ?it/s]Batches:   2%|▏         | 1/55 [00:03<03:17,  3.66s/it]Batches:   4%|▎         | 2/55 [00:06<02:53,  3.28s/it]Batches:   5%|▌         | 3/55 [00:09<02:31,  2.92s/it]Batches:   7%|▋         | 4/55 [00:11<02:15,  2.66s/it]Batches:   9%|▉         | 5/55 [00:13<02:03,  2.47s/it]Batches:  11%|█         | 6/55 [00:15<01:55,  2.36s/it]Batches:  13%|█▎        | 7/55 [00:17<01:48,  2.27s/it]Batches:  15%|█▍        | 8/55 [00:20<01:47,  2.29s/it]Batches:  16%|█▋        | 9/55 [00:22<01:41,  2.21s/it]Batches:  18%|█▊        | 10/55 [00:24<01:38,  2.18s/it]Batches:  20%|██        | 11/55 [00:26<01:35,  2.17s/it]Batches:  22%|██▏       | 12/55 [00:28<01:33,  2.17s/it]Batches:  24%|██▎       | 13/55 [00:30<01:29,  2.13s/it]Batches:  25%|██▌       | 14/55 [00:32<01:26,  2.10s/it]Batches:  27%|██▋       | 15/55 [00:34<01:22,  2.07s/it]Batches:  29%|██▉       | 16/55 [00:36<01:20,  2.07s/it]Batches:  31%|███       | 17/55 [00:38<01:18,  2.07s/it]Batches:  33%|███▎      | 18/55 [00:40<01:16,  2.05s/it]Batches:  35%|███▍      | 19/55 [00:42<01:13,  2.04s/it]Batches:  36%|███▋      | 20/55 [00:44<01:11,  2.04s/it]Batches:  38%|███▊      | 21/55 [00:46<01:08,  2.00s/it]Batches:  40%|████      | 22/55 [00:48<01:04,  1.97s/it]Batches:  42%|████▏     | 23/55 [00:50<01:02,  1.97s/it]Batches:  44%|████▎     | 24/55 [00:52<01:00,  1.95s/it]Batches:  45%|████▌     | 25/55 [00:54<00:57,  1.91s/it]Batches:  47%|████▋     | 26/55 [00:56<00:54,  1.88s/it]Batches:  49%|████▉     | 27/55 [00:57<00:51,  1.85s/it]Batches:  51%|█████     | 28/55 [00:59<00:49,  1.83s/it]Batches:  53%|█████▎    | 29/55 [01:01<00:46,  1.79s/it]Batches:  55%|█████▍    | 30/55 [01:03<00:44,  1.77s/it]Batches:  56%|█████▋    | 31/55 [01:04<00:41,  1.72s/it]Batches:  58%|█████▊    | 32/55 [01:06<00:39,  1.72s/it]Batches:  60%|██████    | 33/55 [01:08<00:37,  1.70s/it]Batches:  62%|██████▏   | 34/55 [01:09<00:35,  1.68s/it]Batches:  64%|██████▎   | 35/55 [01:11<00:33,  1.66s/it]Batches:  65%|██████▌   | 36/55 [01:13<00:31,  1.66s/it]Batches:  67%|██████▋   | 37/55 [01:14<00:29,  1.65s/it]Batches:  69%|██████▉   | 38/55 [01:16<00:27,  1.61s/it]Batches:  71%|███████   | 39/55 [01:17<00:25,  1.58s/it]Batches:  73%|███████▎  | 40/55 [01:19<00:23,  1.55s/it]Batches:  75%|███████▍  | 41/55 [01:20<00:21,  1.56s/it]Batches:  76%|███████▋  | 42/55 [01:22<00:19,  1.48s/it]Batches:  78%|███████▊  | 43/55 [01:23<00:17,  1.45s/it]Batches:  80%|████████  | 44/55 [01:24<00:13,  1.27s/it]Batches:  82%|████████▏ | 45/55 [01:25<00:11,  1.13s/it]Batches:  84%|████████▎ | 46/55 [01:25<00:09,  1.03s/it]Batches:  85%|████████▌ | 47/55 [01:26<00:07,  1.03it/s]Batches:  87%|████████▋ | 48/55 [01:27<00:06,  1.07it/s]Batches:  89%|████████▉ | 49/55 [01:28<00:05,  1.12it/s]Batches:  91%|█████████ | 50/55 [01:29<00:04,  1.17it/s]Batches:  93%|█████████▎| 51/55 [01:29<00:03,  1.20it/s]Batches:  95%|█████████▍| 52/55 [01:30<00:02,  1.23it/s]Batches:  96%|█████████▋| 53/55 [01:31<00:01,  1.26it/s]Batches:  98%|█████████▊| 54/55 [01:32<00:00,  1.29it/s]Batches: 100%|██████████| 55/55 [01:32<00:00,  1.45it/s]Batches: 100%|██████████| 55/55 [01:32<00:00,  1.68s/it]
+[Cluster] KMeans k=12 on 3500 messages …
+
+[Cluster] Saving CSVs to data/clusters//
+  aadhaar_pan_kyc_fraud                         248 msgs
+  banking_kyc_phishing                          260 msgs
+  callback_vishing_fraud                        517 msgs
+  delivery_parcel_fraud                         319 msgs
+  direct_apk_download                           208 msgs
+  electricity_utility_fraud                     232 msgs
+  govt_challan_apk                              251 msgs
+  loan_app_fraud                                374 msgs
+  lottery_reward_cashback_scam                  295 msgs
+  qr_code_sideload_scam                         233 msgs
+  telecom_recharge_fraud                        250 msgs
+  upi_payment_fraud                             313 msgs
+
+────────────────────────────────────────────────────────────
+  FRAUD CATEGORY                              COUNT
+────────────────────────────────────────────────────────────
+  callback_vishing_fraud                        517
+  loan_app_fraud                                374
+  delivery_parcel_fraud                         319
+  upi_payment_fraud                             313
+  lottery_reward_cashback_scam                  295
+  banking_kyc_phishing                          260
+  govt_challan_apk                              251
+  telecom_recharge_fraud                        250
+  aadhaar_pan_kyc_fraud                         248
+  qr_code_sideload_scam                         233
+  electricity_utility_fraud                     232
+  direct_apk_download                           208
+────────────────────────────────────────────────────────────
+  TOTAL SPAM                                   3500
+────────────────────────────────────────────────────────────
+
+========================================================
+Phase 6: Start web UI for Android testing
+========================================================
+Web UI started. Open http://192.168.11.13:8000 on Android.
+
+Pipeline complete.
+  Model    : 
+  Clusters : data/clusters/

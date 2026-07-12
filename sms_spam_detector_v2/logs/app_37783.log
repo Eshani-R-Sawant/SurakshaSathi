@@ -1,0 +1,51 @@
+Using model: final_model_20260630_135011/
+========================================================
+Starting web UI for testing
+========================================================
+Skipping import of cpp extensions due to incompatible torch version. Please upgrade to torch >= 2.11.0 (found 2.7.1+cu118).
+[App] Loading model from final_model_20260630_135011/ …
+[SMSAnalyzer] threshold=0.4904 (from training)
+401 Client Error. (Request ID: Root=1-6a45279a-2b3d6c704304a68d7597be51;5dec26a5-aaeb-4b5b-a28b-943e53d87480)
+
+Cannot access gated repo for url https://huggingface.co/ai4bharat/indic-bert/resolve/main/model.safetensors.
+Access to model ai4bharat/indic-bert is restricted. You must have access to it and be authenticated to access it. Please log in.
+Traceback (most recent call last):
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/huggingface_hub/utils/_http.py", line 761, in hf_raise_for_status
+    response.raise_for_status()
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 'https://huggingface.co/ai4bharat/indic-bert/resolve/main/model.safetensors'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/transformers/utils/hub.py", line 601, in has_file
+    hf_raise_for_status(response)
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/huggingface_hub/utils/_http.py", line 796, in hf_raise_for_status
+    raise gated_err from e
+huggingface_hub.errors.GatedRepoError: 401 Client Error. (Request ID: Root=1-6a45279a-2b3d6c704304a68d7597be51;5dec26a5-aaeb-4b5b-a28b-943e53d87480)
+
+Cannot access gated repo for url https://huggingface.co/ai4bharat/indic-bert/resolve/main/model.safetensors.
+Access to model ai4bharat/indic-bert is restricted. You must have access to it and be authenticated to access it. Please log in.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/scratch/m25cse012/sms_spam_detector_v2/src/app.py", line 360, in <module>
+    main()
+  File "/scratch/m25cse012/sms_spam_detector_v2/src/app.py", line 331, in main
+    _sms_analyzer = SMSAnalyzer(config_path=args.config, model_path=args.model,
+  File "/scratch/m25cse012/sms_spam_detector_v2/src/inference.py", line 147, in __init__
+    self.model = SideloadingDetector(cfg)
+  File "/scratch/m25cse012/sms_spam_detector_v2/src/model.py", line 29, in __init__
+    self.backbone = AutoModel.from_pretrained(config.model_name)
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/transformers/models/auto/auto_factory.py", line 387, in from_pretrained
+    return model_class.from_pretrained(
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/transformers/modeling_utils.py", line 4057, in from_pretrained
+    checkpoint_files, sharded_metadata = _get_resolved_checkpoint_files(
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/transformers/modeling_utils.py", line 665, in _get_resolved_checkpoint_files
+    and not has_file(pretrained_model_name_or_path, safe_weights_name, **has_file_kwargs)
+  File "/scratch/m25cse012/myenv/lib/python3.10/site-packages/transformers/utils/hub.py", line 605, in has_file
+    raise OSError(
+OSError: ai4bharat/indic-bert is a gated repository. Make sure to request access at https://huggingface.co/ai4bharat/indic-bert and pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`.

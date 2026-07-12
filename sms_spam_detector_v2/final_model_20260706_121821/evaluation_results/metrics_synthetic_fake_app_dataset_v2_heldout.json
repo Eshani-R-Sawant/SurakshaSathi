@@ -1,0 +1,45 @@
+{
+  "title": "CUSTOM USER TEST SET",
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "macro_precision": 1.0,
+  "macro_recall": 1.0,
+  "weighted_f1": 1.0,
+  "roc_auc": 0.9998476190476191,
+  "avg_latency_ms": 0.20311264026012008,
+  "confusion_matrix": {
+    "TN": 225,
+    "FP": 0,
+    "FN": 0,
+    "TP": 525
+  },
+  "optimal_threshold_99pct": 0.767102837562561,
+  "precision_at_threshold": 1.0,
+  "per_class": {
+    "Ham": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 225.0
+    },
+    "Spam (Sideloading)": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 525.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 750.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 750.0
+    }
+  }
+}
