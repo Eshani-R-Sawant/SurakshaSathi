@@ -1,7 +1,8 @@
 """Loads the two provided CSVs (synthetic_data/train.csv, synthetic_data/synthetic_dataset.csv),
 keeps only spam-labeled rows (label==1) -- Blue DB per spec only ever holds messages the on-device
 model has already flagged as spam -- and fills in the metadata columns the raw CSVs don't have:
-message_id, channel, region, persona, message_type, sender, timestamp, content_type, needs_translation.
+message_id, channel, region, persona, message_type, sender, timestamp, content_type, needs_translation,
+user_name, user_phone.
 
 `message_type` is derived from the actual message text (clustering/message_type.py) rather than
 the raw CSVs' `category` column, which for ~83% of rows just says "public_dataset"/"raw_dataset"
@@ -9,6 +10,12 @@ the raw CSVs' `category` column, which for ~83% of rows just says "public_datase
 install would carry on UserMap -- sampled independent of region/message_type since we have no real
 ground truth linking persona to fraud targeting (inventing that correlation would misrepresent
 synthetic data as an observed pattern).
+
+`user_name`/`user_phone` simulate the recipient who reported/received this message on their
+device -- entirely synthetic identities (see `_synth_recipient`), never real PII, generated so
+the demo pipeline has someone concrete to alert once a cluster crosses its threshold (see
+db/seed/seed_blue_db.py::seed_users, which derives UserMap rows from these two columns). This is
+separate from `sender`, which is the fraud message's spoofed originator, not the recipient.
 
 Existing `metadata` JSON (present on some synthetic_dataset.csv rows, e.g. {"sender": ...}) is
 preserved and takes priority over synthesized values.
@@ -60,6 +67,32 @@ def _parse_metadata(raw: str) -> dict:
             return {}
 
 
+# Common Indian first/last names spanning multiple regions/scripts-of-origin (transliterated),
+# used only to generate synthetic recipient identities -- never sourced from or matched against
+# any real person. Deliberately not persona/region-correlated for the same reason `persona` above
+# is sampled independently: inventing a name<->region<->persona correlation would misrepresent
+# synthetic data as an observed demographic pattern.
+_FIRST_NAMES = [
+    "Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Krishna",
+    "Ishaan", "Rohan", "Ananya", "Diya", "Saanvi", "Aadhya", "Kiara", "Myra",
+    "Priya", "Anjali", "Neha", "Pooja", "Rahul", "Amit", "Suresh", "Vikram",
+    "Lakshmi", "Meera", "Sunita", "Geeta", "Rajesh", "Manoj", "Deepak", "Sanjay",
+]
+_LAST_NAMES = [
+    "Sharma", "Verma", "Gupta", "Kumar", "Singh", "Patel", "Reddy", "Nair",
+    "Iyer", "Rao", "Mehta", "Joshi", "Desai", "Pillai", "Chatterjee", "Banerjee",
+    "Mukherjee", "Das", "Gowda", "Naidu", "Shetty", "Kulkarni", "Bose", "Menon",
+]
+
+
+def _synth_recipient() -> tuple[str, str]:
+    """Synthesizes a (name, phone) pair for the message's recipient -- entirely synthetic,
+    never real PII. See module docstring for why this is separate from `sender`."""
+    name = f"{random.choice(_FIRST_NAMES)} {random.choice(_LAST_NAMES)}"
+    phone = f"+91{random.randint(6, 9)}{random.randint(10**8, 10**9 - 1)}"
+    return name, phone
+
+
 def _synth_sender(category: str) -> str:
     if category in ("govt_impersonation",):
         return random.choice(["DL-eCHLAN", "AD-CYBRCL", "VM-GOVTIN"])
@@ -106,6 +139,7 @@ def load_and_enrich() -> pd.DataFrame:
         channel = random.choices(CHANNELS, weights=CHANNEL_WEIGHTS, k=1)[0]
         content_type = CATEGORY_TO_CONTENT_TYPE.get(category, "text_only")
         message_type = classify_message_type(text)
+        user_name, user_phone = _synth_recipient()
 
         is_english = language == "en"
         records.append(
@@ -122,6 +156,8 @@ def load_and_enrich() -> pd.DataFrame:
                 "region": region,
                 "persona": persona,
                 "sender": sender,
+                "user_name": user_name,        # synthetic recipient identity -- see module docstring
+                "user_phone": user_phone,      # synthetic recipient identity -- see module docstring
                 "timestamp": _random_recent_timestamp().isoformat(),
                 "source_dataset": row.get("source", "unknown"),
             }

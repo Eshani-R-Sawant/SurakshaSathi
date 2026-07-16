@@ -22,13 +22,15 @@ import java.util.UUID
 import javax.inject.Inject
 
 /**
- * Firebase Cloud Messaging service — the client side of Flow 4a's segment
- * alerts and Flow 5's safety nudges. Topic-based (no per-user token registry
- * needed for MVP): the app subscribes to `<persona>_<region>_<language>`
- * topics (§7, [com.sbi.surakshasathi.feature.frauddashboard.domain.model.UserSegment.toFcmTopic]);
- * the backend fans a push out to everyone subscribed to a topic when an
- * operator pushes a segment alert or the RAG service issues a pre-emptive
- * warning.
+ * Firebase Cloud Messaging service — the client side of Flow 4a's regional fraud alerts and
+ * Flow 5's safety nudges. Regional alerts are fully automated server-side (macro-cluster
+ * threshold crossings + the daily cybercrime.gov.in digest, see
+ * `Rag_model/alerting/daily_job.py`) and fanned out via FCM topics
+ * (`<persona>_<region>_<language>`) — there is no in-app "push an alert" action; a consumer
+ * banking app has no business letting a regular user manually alert other users. The client-side
+ * guaranteed-notification path for regional alerts is
+ * [com.sbi.surakshasathi.feature.frauddashboard.data.worker.RegionalAlertSyncWorker], which polls
+ * `GET /v1/alerts/daily` and posts locally rather than relying solely on this FCM listener.
  *
  * Safety nudges respect quiet hours (§7c 5.3, anti-nag rule): between 22:00
  * and 07:00 the nudge is stored for the in-app Learn tab card but the system

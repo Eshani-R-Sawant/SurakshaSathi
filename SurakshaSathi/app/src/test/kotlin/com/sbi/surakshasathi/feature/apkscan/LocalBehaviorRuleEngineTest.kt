@@ -31,65 +31,65 @@ class LocalBehaviorRuleEngineTest {
     }
 
     @Test
-    fun `SBI-R01 fires for overlay plus accessibility combo`() {
+    fun `BANK-R01 fires for overlay plus accessibility combo`() {
         val matches = engine.evaluate(
             signals(
                 permissions = listOf(android.Manifest.permission.SYSTEM_ALERT_WINDOW),
                 hasAccessibilityService = true,
             ),
         )
-        assertTrue(matches.any { it.ruleId == "SBI-R01" })
+        assertTrue(matches.any { it.ruleId == "BANK-R01" })
     }
 
     @Test
-    fun `SBI-R02 does not fire for an actual messaging app`() {
+    fun `BANK-R02 does not fire for an actual messaging app`() {
         val matches = engine.evaluate(
             signals(
                 packageName = "com.example.messaging",
                 permissions = listOf(android.Manifest.permission.RECEIVE_SMS, "android.permission.POST_NOTIFICATIONS"),
             ),
         )
-        assertTrue(matches.none { it.ruleId == "SBI-R02" })
+        assertTrue(matches.none { it.ruleId == "BANK-R02" })
     }
 
     @Test
-    fun `SBI-R02 fires for a non-messaging app requesting SMS plus notification access`() {
+    fun `BANK-R02 fires for a non-messaging app requesting SMS plus notification access`() {
         val matches = engine.evaluate(
             signals(
                 packageName = "com.fake.banking",
                 permissions = listOf(android.Manifest.permission.RECEIVE_SMS, "android.permission.POST_NOTIFICATIONS"),
             ),
         )
-        assertTrue(matches.any { it.ruleId == "SBI-R02" })
+        assertTrue(matches.any { it.ruleId == "BANK-R02" })
     }
 
     @Test
-    fun `SBI-R05 fires for sideloaded app requesting install-packages permission`() {
+    fun `BANK-R05 fires for sideloaded app requesting install-packages permission`() {
         val matches = engine.evaluate(
             signals(
                 permissions = listOf("android.permission.REQUEST_INSTALL_PACKAGES"),
                 installerPackageName = null, // Sideloaded — no installer
             ),
         )
-        assertTrue(matches.any { it.ruleId == "SBI-R05" })
+        assertTrue(matches.any { it.ruleId == "BANK-R05" })
     }
 
     @Test
-    fun `SBI-R05 does not fire for Play Store installs`() {
+    fun `BANK-R05 does not fire for Play Store installs`() {
         val matches = engine.evaluate(
             signals(
                 permissions = listOf("android.permission.REQUEST_INSTALL_PACKAGES"),
                 installerPackageName = "com.android.vending",
             ),
         )
-        assertTrue(matches.none { it.ruleId == "SBI-R05" })
+        assertTrue(matches.none { it.ruleId == "BANK-R05" })
     }
 
     @Test
     fun `aggregateRiskScore sums weights and clamps to 1_0`() {
         val matches = engine.evaluate(
             signals(
-                appLabel = "SBI YONO",
+                appLabel = "YONO Bank",
                 permissions = listOf(android.Manifest.permission.SYSTEM_ALERT_WINDOW),
                 hasAccessibilityService = true,
                 hasDeviceAdminReceiver = true,

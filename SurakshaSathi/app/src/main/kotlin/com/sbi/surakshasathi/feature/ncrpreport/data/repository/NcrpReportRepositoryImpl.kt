@@ -6,11 +6,14 @@ import com.sbi.surakshasathi.core.common.Result
 import com.sbi.surakshasathi.core.common.safeCall
 import com.sbi.surakshasathi.feature.ncrpreport.data.local.dao.NcrpReportDao
 import com.sbi.surakshasathi.feature.ncrpreport.data.local.entity.NcrpReportEntity
+import com.sbi.surakshasathi.feature.ncrpreport.data.remote.ApkEvidenceDto
+import com.sbi.surakshasathi.feature.ncrpreport.data.remote.ComplainantDto
 import com.sbi.surakshasathi.feature.ncrpreport.data.remote.DeviceIntegrityDto
 import com.sbi.surakshasathi.feature.ncrpreport.data.remote.LocationDto
 import com.sbi.surakshasathi.feature.ncrpreport.data.remote.NcrpApi
 import com.sbi.surakshasathi.feature.ncrpreport.data.remote.NcrpReportRequestDto
 import com.sbi.surakshasathi.feature.ncrpreport.data.remote.OffendingMessageDto
+import com.sbi.surakshasathi.feature.ncrpreport.data.remote.RagDiagnosisDto
 import com.sbi.surakshasathi.feature.ncrpreport.data.remote.RagFeedRequestDto
 import com.sbi.surakshasathi.feature.ncrpreport.data.worker.NcrpSubmissionWorker
 import com.sbi.surakshasathi.feature.ncrpreport.domain.model.ForensicReport
@@ -111,16 +114,44 @@ class NcrpReportRepositoryImpl
 
         private fun ForensicReport.toRequestDto() =
             NcrpReportRequestDto(
-                apkSha256 = apkSha256,
-                installSource = installSource,
-                deviceIntegrity = DeviceIntegrityDto(status = deviceIntegrityStatus, rooted = deviceRooted),
-                offendingMessage =
+                reportSource = reportSource.name,
+                apkEvidence =
+                    if (apkSha256 != null || apkPackageName != null) {
+                        ApkEvidenceDto(
+                            sha256 = apkSha256,
+                            packageName = apkPackageName,
+                            installSource = installSource,
+                            verdict = apkVerdict,
+                            isImpersonation = apkIsImpersonation,
+                            tierReached = apkTierReached,
+                            localRiskScore = apkLocalRiskScore,
+                            triggeredRuleIds = apkTriggeredRuleIds,
+                            engineHits = apkEngineHits,
+                        )
+                    } else {
+                        null
+                    },
+                messageEvidence =
                     if (offendingSender != null || offendingMessageBody != null) {
                         OffendingMessageDto(sender = offendingSender, body = offendingMessageBody, urls = offendingUrls)
                     } else {
                         null
                     },
+                ragDiagnosis =
+                    if (ragVerdict != null) {
+                        RagDiagnosisDto(
+                            verdict = ragVerdict,
+                            threatType = ragThreatType,
+                            confidence = ragConfidence,
+                            suspiciousSignals = ragSuspiciousSignals,
+                        )
+                    } else {
+                        null
+                    },
+                userDescription = userDescription,
+                deviceIntegrity = DeviceIntegrityDto(status = deviceIntegrityStatus, rooted = deviceRooted),
                 location = if (regionLabel != null || lat != null) LocationDto(regionLabel, lat, lng) else null,
+                complainant = ComplainantDto(name = reporterName, phone = reporterPhone, email = reporterEmail),
                 reportedAtMillis = reportedAtMillis,
                 reporterConsent = reporterConsent,
             )

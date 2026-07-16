@@ -41,3 +41,22 @@ def translate_to_english(text: str, source_language: str) -> str:
         if settings.enable_bhashini_fallback:
             return _call_bhashini(text, source_language)
         raise
+
+
+@with_retry("google_translate", exceptions=(httpx.HTTPError,))
+def _call_google_translate_from_english(text: str, target_language: str) -> str:
+    params = {"key": settings.google_translate_api_key, "target": target_language, "source": "en", "q": text}
+    resp = httpx.post(TRANSLATE_V2_ENDPOINT, params=params, timeout=settings.url_head_timeout_ms / 1000)
+    resp.raise_for_status()
+    return resp.json()["data"]["translations"][0]["translatedText"]
+
+
+def translate_from_english(text: str, target_language: str) -> str:
+    """Localizes the LLM's English threat-report text into the user's selected language.
+    Generation always happens in English (Groq's structured-output mode is only validated in
+    English) -- this is a second, separate translation step, not a prompt instruction to the LLM,
+    so report quality doesn't depend on how fluently the model writes in each of the 13 supported
+    languages. Raises on failure so the caller can decide whether to fall back to English text."""
+    if target_language == "en":
+        return text
+    return _call_google_translate_from_english(text, target_language)

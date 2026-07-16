@@ -3,11 +3,11 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Shield shape — SBI blue fill -->
+    <!-- Shield shape — Bank blue fill -->
     <path
         android:fillColor="#2B5AC8"
         android:pathData="M54,10L18,26V52C18,72 34,88 54,96C74,88 90,72 90,52V26L54,10Z" />
-    <!-- Checkmark — SBI gold -->
+    <!-- Checkmark — Bank gold -->
     <path
         android:fillColor="#DDAF00"
         android:strokeWidth="4"

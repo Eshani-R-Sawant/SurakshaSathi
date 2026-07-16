@@ -3,9 +3,12 @@ package com.sbi.surakshasathi.core.di
 import android.content.Context
 import androidx.room.Room
 import com.sbi.surakshasathi.core.database.AppDatabase
+import com.sbi.surakshasathi.core.translation.TranslationCacheDao
 import com.sbi.surakshasathi.feature.apkscan.data.local.dao.PhishingDomainDao
 import com.sbi.surakshasathi.feature.apkscan.data.local.dao.ThreatHashDao
+import com.sbi.surakshasathi.feature.awareness.data.local.dao.AdvisoryDao
 import com.sbi.surakshasathi.feature.awareness.data.local.dao.BadgeDao
+import com.sbi.surakshasathi.feature.awareness.data.local.dao.GameOutcomeDao
 import com.sbi.surakshasathi.feature.awareness.data.local.dao.LessonDao
 import com.sbi.surakshasathi.feature.awareness.data.local.dao.LessonProgressDao
 import com.sbi.surakshasathi.feature.awareness.data.local.dao.SafetyNudgeDao
@@ -86,4 +89,18 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideSafetyNudgeDao(db: AppDatabase): SafetyNudgeDao = db.safetyNudgeDao()
+
+    // ── Phase 7 DAOs ──────────────────────────────────────────────────────────
+
+    @Provides
+    @Singleton
+    fun provideGameOutcomeDao(db: AppDatabase): GameOutcomeDao = db.gameOutcomeDao()
+
+    @Provides
+    @Singleton
+    fun provideAdvisoryDao(db: AppDatabase): AdvisoryDao = db.advisoryDao()
+
+    @Provides
+    @Singleton
+    fun provideTranslationCacheDao(db: AppDatabase): TranslationCacheDao = db.translationCacheDao()
 }

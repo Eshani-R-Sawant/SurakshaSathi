@@ -78,7 +78,7 @@ fun ApkAlertScreen(
                         modifier = Modifier.size(88.dp),
                     )
                     Text(
-                        if (result.isImpersonation) "Fake SBI/YONO App Detected" else "Malicious App Detected",
+                        if (result.isImpersonation) "Fake Bank/YONO App Detected" else "Malicious App Detected",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -100,7 +100,7 @@ fun ApkAlertScreen(
                             DetailRow("Detected by", tierLabel(result.tierReached))
                             DetailRow("Source", result.source)
                             if (result.isImpersonation) {
-                                DetailRow("Reason", "Signing certificate does not match official SBI/YONO")
+                                DetailRow("Reason", "Signing certificate does not match official Bank/YONO")
                             }
                             if (result.triggeredRuleIds.isNotEmpty()) {
                                 DetailRow("Rules triggered", result.triggeredRuleIds.joinToString(", "))
@@ -129,7 +129,7 @@ fun ApkAlertScreen(
                     }
 
                     Button(
-                        onClick = { navController.navigate(Screen.NcrpReport.createRoute(result.packageName)) },
+                        onClick = { navController.navigate(Screen.NcrpReport.createRouteForApk(result.packageName)) },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(12.dp),
                     ) {

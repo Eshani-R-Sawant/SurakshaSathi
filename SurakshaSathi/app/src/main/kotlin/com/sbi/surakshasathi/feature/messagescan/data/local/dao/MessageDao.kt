@@ -44,11 +44,14 @@ interface MessageDao {
     @Query("UPDATE messages SET rag_escalated = 1 WHERE id = :id")
     suspend fun markRagEscalated(id: Long)
 
-    /** Persists the RAG agent's localized warning/guideline text for a message. */
+    /** Persists the RAG agent's full diagnosis (warning/guideline text plus verdict/threatType/
+     * confidence/suspiciousSignals) for a message — see [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning]. */
     @Query(
         """
         UPDATE messages
-        SET rag_escalated = 1, rag_warning_text = :warning, rag_guideline_text = :guideline
+        SET rag_escalated = 1, rag_warning_text = :warning, rag_guideline_text = :guideline,
+            rag_verdict = :verdict, rag_threat_type = :threatType, rag_confidence = :confidence,
+            rag_suspicious_signals = :suspiciousSignalsRaw
         WHERE id = :id
     """,
     )
@@ -56,6 +59,10 @@ interface MessageDao {
         id: Long,
         warning: String,
         guideline: String,
+        verdict: String,
+        threatType: String,
+        confidence: Float,
+        suspiciousSignalsRaw: String,
     )
 
     // ── Retention / bounded table (§8B) ──────────────────────────────────────

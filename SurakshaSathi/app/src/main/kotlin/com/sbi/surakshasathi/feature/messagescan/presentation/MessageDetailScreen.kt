@@ -182,7 +182,7 @@ fun MessageDetailScreen(
                         if (message.classification != MessageClassification.SAFE) {
                             Button(
                                 onClick = {
-                                    navController.navigate(Screen.NcrpReport.createRoute(message.id.toString()))
+                                    navController.navigate(Screen.NcrpReport.createRouteForMessage(message.id))
                                 },
                                 colors =
                                     ButtonDefaults.buttonColors(

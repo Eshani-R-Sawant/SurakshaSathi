@@ -58,6 +58,15 @@ data class MessageEntity(
     val ragWarningText: String? = null,
     @ColumnInfo(name = "rag_guideline_text")
     val ragGuidelineText: String? = null,
+    @ColumnInfo(name = "rag_verdict")
+    val ragVerdict: String? = null,
+    @ColumnInfo(name = "rag_threat_type")
+    val ragThreatType: String? = null,
+    @ColumnInfo(name = "rag_confidence")
+    val ragConfidence: Float? = null,
+    /** Pipe-separated, same convention as [extractedUrlsRaw]. */
+    @ColumnInfo(name = "rag_suspicious_signals")
+    val ragSuspiciousSignalsRaw: String = "",
 ) {
     fun toDomain(): Message =
         Message(
@@ -82,6 +91,15 @@ data class MessageEntity(
             ragEscalated = ragEscalated,
             ragWarningText = ragWarningText,
             ragGuidelineText = ragGuidelineText,
+            ragVerdict = ragVerdict,
+            ragThreatType = ragThreatType,
+            ragConfidence = ragConfidence,
+            ragSuspiciousSignals =
+                if (ragSuspiciousSignalsRaw.isBlank()) {
+                    emptyList()
+                } else {
+                    ragSuspiciousSignalsRaw.split("|").filter { it.isNotBlank() }
+                },
         )
 
     companion object {
@@ -101,6 +119,10 @@ data class MessageEntity(
                 ragEscalated = m.ragEscalated,
                 ragWarningText = m.ragWarningText,
                 ragGuidelineText = m.ragGuidelineText,
+                ragVerdict = m.ragVerdict,
+                ragThreatType = m.ragThreatType,
+                ragConfidence = m.ragConfidence,
+                ragSuspiciousSignalsRaw = m.ragSuspiciousSignals.joinToString("|"),
             )
     }
 }

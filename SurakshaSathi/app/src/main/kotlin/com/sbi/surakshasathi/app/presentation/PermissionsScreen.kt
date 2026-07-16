@@ -166,7 +166,7 @@ fun PermissionsScreen(
         PermissionCard(
             icon = Icons.Filled.CameraAlt,
             title = "Camera",
-            description = "Used for identity liveness check and scanning QR codes to verify official SBI links. No images are stored or transmitted.",
+            description = "Used for identity liveness check and scanning QR codes to verify official Bank links. No images are stored or transmitted.",
             isGranted = permissionGranted(android.Manifest.permission.CAMERA),
             isRequired = false,
         )

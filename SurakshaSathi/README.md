@@ -1,7 +1,7 @@
 # SurakshaSathi
 
-**SurakshaSathi** ("Security Companion") is a production-grade Android client for the SBI
-anti-phishing hackathon problem statement: fraudsters circulate fake YONO banking apps via SMS,
+**SurakshaSathi** ("Security Companion") is a production-grade Android client for a bank
+anti-phishing hackathon problem statement: fraudsters circulate fake YONO Bank banking apps via SMS,
 WhatsApp, and Telegram, then phish credentials, OTPs, MPINs, and card details. SurakshaSathi
 detects malicious messages and fake/malicious APKs on-device, warns the user in their own
 language, hardens sensitive actions with adaptive friction, and reports fraud to the national
@@ -84,7 +84,7 @@ Build tasks are flavor-qualified: `assembleNotificationOnlyDebug` / `assembleDef
 etc. The flavor also drives `BuildConfig.SMS_STRATEGY`, so the runtime strategy and the manifest's
 permission declarations can never drift out of sync with each other.
 
-**Choose `defaultHandler` only if** SBI intends to submit the Permissions Declaration Form, or
+**Choose `defaultHandler` only if** the Bank intends to submit the Permissions Declaration Form, or
 plans enterprise (MDM/sideload) distribution outside the Play Store.
 
 ## 5. Backend API contracts
@@ -117,7 +117,7 @@ match exactly or the client's `.getOrDefault()` parsing will silently treat it a
 POST /threat/apk        { sha256, packageName, signingCertSha256: [String] } → { verdict, engineHits }
 POST /threat/apk/deep   (MaMaDroid deep analysis, same request)              → { verdict, mamaDroidScore }
 GET  /threat/url?u=                                                          → { verdict, isKnownPhishingDomain }
-GET  /threat/sbi-allowlist                                                   → [ { packageName, signingCertSha256 } ]
+GET  /threat/bank-allowlist                                                  → [ { packageName, signingCertSha256 } ]
 POST /integrity/verify  { integrityToken }                                   → { status }  (decodes the Play Integrity token server-side)
 ```
 Client contract: `ThreatIntelApi.kt`, `IntegrityApi.kt`. `verdict` is always one of
@@ -194,13 +194,13 @@ Client contract: `AwarenessApi.kt`. Falls back to three bundled English lessons
 
 34 unit tests (JUnit5 + MockK), all passing, covering the security-critical pure-logic classes:
 `HybridDecisionEngine`, `RuleBasedClassifier`, `TraiDltValidator`, `LocalBehaviorRuleEngine`
-(SBI-R01–R07), `ImpersonationChecker`, `WeightedRiskScoringEngine`, `EvaluateFrictionUseCase`.
+(BANK-R01–R07), `ImpersonationChecker`, `WeightedRiskScoringEngine`, `EvaluateFrictionUseCase`.
 
 **Two real bugs were found and fixed by these tests** during this build, not left as pre-existing
 issues:
 1. `TraiDltValidatorImpl` used `startsWith()` prefix matching against bare registered headers like
-   `"SBI"`/`"SBIYONO"` — meaning **any** spoofed sender starting with those strings (e.g.
-   `"SBIYONO1"`, `"SBIFRAUD"`) validated as a legitimate registered sender, silently defeating the
+   `"BANK"`/`"BANKYONO"` — meaning **any** spoofed sender starting with those strings (e.g.
+   `"BANKYONO1"`, `"BANKFRAUD"`) validated as a legitimate registered sender, silently defeating the
    DLT check. Fixed to exact-match only.
 2. `RuleBasedClassifier`'s `SENDER_NOT_REGISTERED_DLT` rule fired for **any** non-digit sender name
    over 4 characters, including WhatsApp/Telegram contact display names — TRAI DLT registration has
@@ -233,16 +233,17 @@ auto-formatted to `ktlint_official`; a full `detekt` pass has not been run to ze
   fully wired and will correctly render/store anything pushed to a topic; only the *subscribe*
   step (asking the user their persona/region and calling `FirebaseMessaging.subscribeToTopic`) is
   not yet built.
-- **SBI's real signing-certificate fingerprint** is a placeholder (`REPLACE_WITH_REAL_SBI_YONO_SIGNING_CERT_SHA256`
-  in `SbiAllowList.kt`) — the impersonation-detection *mechanism* is real and tested, but needs
-  SBI's actual cert hash before it can distinguish the real YONO app from a fake one.
+- **Each bank's real signing-certificate fingerprint** is a placeholder (e.g.
+  `REPLACE_WITH_REAL_SBI_YONO_SIGNING_CERT_SHA256` in `BankAllowList.kt`) — the
+  impersonation-detection *mechanism* is real and tested, but needs each bank's actual cert hash
+  before it can distinguish their real app from a fake one.
 - **Certificate pinning** is wired but inactive (placeholder pins) — see §7.
 - **Google Maps heatmap** requires `MAPS_API_KEY`; without one, a Compose Canvas fallback renders
   an approximate heatmap over India's lat/lng bounding box so the dashboard never fails to render.
 
 ## 11. Compliance surface
 
-Flags for SBI's legal/security review, not a legal opinion:
+Flags for the Bank's legal/security review, not a legal opinion:
 - **DPDP Act 2023** — consent ledger with version + timestamp exists (`UserPreferencesDataStore`);
   data minimization is enforced via bounded retention; no data leaves the device without consent.
 - **RBI Master Directions on digital banking** — adaptive friction (Flow 3) and device-integrity

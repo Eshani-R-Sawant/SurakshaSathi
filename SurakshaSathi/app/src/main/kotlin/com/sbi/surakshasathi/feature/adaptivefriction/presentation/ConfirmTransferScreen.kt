@@ -106,7 +106,7 @@ fun ConfirmTransferScreen(
                             )
                         }
                         LabeledTextField(
-                            value = "SBI YONO Merchant",
+                            value = "YONO Bank Merchant",
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Pay to") },

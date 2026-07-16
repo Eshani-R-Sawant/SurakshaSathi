@@ -24,8 +24,8 @@ import androidx.navigation.NavController
 import com.sbi.surakshasathi.app.navigation.Screen
 import com.sbi.surakshasathi.core.designsystem.theme.SafeGreen40
 import com.sbi.surakshasathi.core.designsystem.theme.SafeGreen80
-import com.sbi.surakshasathi.core.designsystem.theme.SbiBlue80
-import com.sbi.surakshasathi.core.designsystem.theme.SbiGold80
+import com.sbi.surakshasathi.core.designsystem.theme.BankBlue80
+import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 
 /**
  * Home Hub — the primary entry screen showing:
@@ -94,7 +94,7 @@ fun HomeHubScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "SBI Anti-Phishing Shield",
+                    text = "Bank Anti-Phishing Shield",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
                 )
@@ -157,7 +157,7 @@ fun HomeHubScreen(
                     icon = Icons.Filled.Message,
                     title = "Scan Messages",
                     subtitle = "Check SMS & WhatsApp",
-                    color = SbiBlue80,
+                    color = BankBlue80,
                     modifier = Modifier.weight(1f),
                     onClick = { navController.navigate(Screen.Alerts.route) },
                 )
@@ -165,7 +165,7 @@ fun HomeHubScreen(
                     icon = Icons.Filled.Android,
                     title = "Scan APK",
                     subtitle = "Verify any app",
-                    color = SbiGold80,
+                    color = BankGold80,
                     modifier = Modifier.weight(1f),
                     onClick = { navController.navigate(Screen.ApkScan.route) },
                 )
@@ -174,7 +174,7 @@ fun HomeHubScreen(
                 QuickActionCard(
                     icon = Icons.Filled.QrCodeScanner,
                     title = "Verify Link",
-                    subtitle = "Is this official SBI?",
+                    subtitle = "Is this official Bank?",
                     color = SafeGreen80,
                     modifier = Modifier.weight(1f),
                     onClick = { navController.navigate(Screen.Learn.route) },
@@ -185,7 +185,7 @@ fun HomeHubScreen(
                     subtitle = "Submit to I4C / NCRP",
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.weight(1f),
-                    onClick = { navController.navigate(Screen.NcrpReport.createRoute("new")) },
+                    onClick = { navController.navigate(Screen.NcrpReport.createRouteManual()) },
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

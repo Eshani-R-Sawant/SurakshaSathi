@@ -38,7 +38,7 @@ android {
 
         // BuildConfig fields — never hard-code secrets in source
         buildConfigField("String", "BACKEND_BASE_URL",
-            "\"${localProp("BACKEND_BASE_URL", "https://api.surakshasathi.sbi.co.in/")}\"")
+            "\"${localProp("BACKEND_BASE_URL", "https://api.surakshasathi.bank.example/")}\"")
         buildConfigField("String", "MAPS_API_KEY",
             "\"${localProp("MAPS_API_KEY", "")}\"")
         buildConfigField("String", "VIRUSTOTAL_API_KEY",
@@ -47,6 +47,15 @@ android {
             "${localProp("PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0")}L")
         buildConfigField("Boolean", "USE_OFFLINE_FALLBACK",
             localProp("USE_OFFLINE_FALLBACK", "false"))
+
+        // Azure Translator (multi-language Learn content) — empty by default; translated text
+        // transparently falls back to the original English source until a key is supplied.
+        buildConfigField("String", "AZURE_TRANSLATOR_KEY",
+            "\"${localProp("AZURE_TRANSLATOR_KEY", "")}\"")
+        buildConfigField("String", "AZURE_TRANSLATOR_REGION",
+            "\"${localProp("AZURE_TRANSLATOR_REGION", "")}\"")
+        buildConfigField("String", "AZURE_TRANSLATOR_ENDPOINT",
+            "\"${localProp("AZURE_TRANSLATOR_ENDPOINT", "https://api.cognitive.microsofttranslator.com/")}\"")
 
         // Manifest placeholders for API keys
         manifestPlaceholders["MAPS_API_KEY"] = localProp("MAPS_API_KEY", "")
@@ -197,8 +206,8 @@ dependencies {
     // ── WorkManager ───────────────────────────────────────────────────────────
     implementation(libs.androidx.work.runtime)
 
-    // ── TensorFlow Lite (on-device ML) ────────────────────────────────────────
-    implementation(libs.bundles.tflite)
+    // ── PyTorch Mobile (on-device ML) ───────────────────────────────────────────
+    implementation(libs.pytorch.mobile.lite)
 
     // ── ML Kit ────────────────────────────────────────────────────────────────
     implementation(libs.mlkit.face.detection)
@@ -210,6 +219,7 @@ dependencies {
     // ── Google Maps ───────────────────────────────────────────────────────────
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
 
     // ── Firebase ──────────────────────────────────────────────────────────────
     implementation(platform(libs.firebase.bom))

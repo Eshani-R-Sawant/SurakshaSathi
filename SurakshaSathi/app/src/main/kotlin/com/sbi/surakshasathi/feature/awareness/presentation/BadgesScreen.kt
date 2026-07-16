@@ -19,7 +19,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.sbi.surakshasathi.core.designsystem.theme.SbiGold80
+import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 import com.sbi.surakshasathi.feature.awareness.domain.usecase.ObserveBadgesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -57,7 +57,7 @@ fun BadgesScreen(
                 items(badges, key = { it.id }) { badge ->
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = SbiGold80, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = BankGold80, modifier = Modifier.size(32.dp))
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(badge.title, fontWeight = FontWeight.SemiBold)

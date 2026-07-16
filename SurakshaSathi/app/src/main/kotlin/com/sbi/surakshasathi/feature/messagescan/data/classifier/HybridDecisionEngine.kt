@@ -6,7 +6,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Hybrid Decision Engine — combines [TfLiteSpamClassifier] and [RuleBasedClassifier]
+ * Hybrid Decision Engine — combines [PyTorchSpamClassifier] and [RuleBasedClassifier]
  * to produce the final [MessageClassification] + riskScore.
  *
  * Decision logic:
@@ -18,8 +18,9 @@ import javax.inject.Singleton
  *   >= SUSPICIOUS_THRESHOLD → MALICIOUS (immediate alert + RAG + NCRP offer)
  *
  * Design decisions:
- * - Rules have higher weight than ML on the placeholder model (rules are deterministic).
- * - When the real trained model ships, ML_WEIGHT can be tuned upward.
+ * - Rules still carry more weight than ML: [PyTorchSpamClassifier]'s auxiliary-feature input is
+ *   zero-filled (see its class doc), which costs it some of its own trained calibration headroom,
+ *   so the deterministic rule engine remains the steadier of the two signals for now.
  * - Either classifier alone can push the score above the MALICIOUS threshold
  *   (e.g. APK download URL = 0.40 rule score → SUSPICIOUS even with ML = 0).
  *
@@ -31,7 +32,7 @@ import javax.inject.Singleton
 class HybridDecisionEngine
     @Inject
     constructor(
-        private val mlClassifier: TfLiteSpamClassifier,
+        private val mlClassifier: PyTorchSpamClassifier,
         private val ruleClassifier: RuleBasedClassifier,
     ) {
         data class Decision(

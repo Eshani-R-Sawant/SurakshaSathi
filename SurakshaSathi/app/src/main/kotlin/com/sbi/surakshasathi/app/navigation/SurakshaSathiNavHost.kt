@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -20,22 +22,33 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import com.sbi.surakshasathi.app.presentation.AlertsHostScreen
 import com.sbi.surakshasathi.app.presentation.HomeHubScreen
+import com.sbi.surakshasathi.app.presentation.LocaleViewModel
 import com.sbi.surakshasathi.app.presentation.OnboardingScreen
 import com.sbi.surakshasathi.app.presentation.PermissionsScreen
+import com.sbi.surakshasathi.core.locale.LocaleManager
 import com.sbi.surakshasathi.feature.adaptivefriction.presentation.ConfirmTransferScreen
 import com.sbi.surakshasathi.feature.adaptivefriction.presentation.LivenessCheckScreen
 import com.sbi.surakshasathi.feature.apkscan.presentation.ApkAlertScreen
 import com.sbi.surakshasathi.feature.apkscan.presentation.ApkScanScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.AdvisoryDetailScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.AdvisoryListScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.AwarenessScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.BadgesScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.BubblePopScamScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.FakeAppDetectiveScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.FraudTrafficControlScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.GameHubScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.LessonDetailScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.OfficialLinkScannerScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.SecurePhoneBuilderScreen
+import com.sbi.surakshasathi.feature.awareness.presentation.ShieldDefenderScreen
 import com.sbi.surakshasathi.feature.frauddashboard.presentation.FraudDashboardScreen
 import com.sbi.surakshasathi.feature.messagescan.presentation.MessageDetailScreen
-import com.sbi.surakshasathi.feature.messagescan.presentation.MessageScanScreen
 import com.sbi.surakshasathi.feature.ncrpreport.presentation.NcrpReportScreen
 import com.sbi.surakshasathi.feature.ragwarning.presentation.RagWarningScreen
+import androidx.hilt.navigation.compose.hiltViewModel
 
 // ── Bottom Nav Items ──────────────────────────────────────────────────────────
 private data class BottomNavItem(
@@ -89,6 +102,10 @@ private fun bottomNavItems() =
  */
 @Composable
 fun SurakshaSathiNavHost(navController: NavHostController = rememberNavController()) {
+    val localeViewModel: LocaleViewModel = hiltViewModel()
+    val selectedLanguage by localeViewModel.selectedLanguage.collectAsStateWithLifecycle()
+    LaunchedEffect(selectedLanguage) { LocaleManager.applyLocale(selectedLanguage) }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val bottomNavItems = bottomNavItems()
@@ -177,7 +194,7 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
                 HomeHubScreen(navController = navController)
             }
             composable(Screen.Alerts.route) {
-                MessageScanScreen(navController = navController)
+                AlertsHostScreen(navController = navController)
             }
             composable(Screen.Dashboard.route) {
                 FraudDashboardScreen(navController = navController)
@@ -215,8 +232,12 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
             }
             composable(
                 route = Screen.NcrpReport.route,
-                arguments = listOf(navArgument("contextId") { type = NavType.StringType }),
-                deepLinks = listOf(navDeepLink { uriPattern = "surakshasathi://report/{contextId}" }),
+                arguments =
+                    listOf(
+                        navArgument("contextType") { type = NavType.StringType },
+                        navArgument("contextId") { type = NavType.StringType },
+                    ),
+                deepLinks = listOf(navDeepLink { uriPattern = "surakshasathi://report/{contextType}/{contextId}" }),
             ) {
                 NcrpReportScreen(navController = navController)
             }
@@ -231,6 +252,35 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
             }
             composable(Screen.Badges.route) {
                 BadgesScreen(navController = navController)
+            }
+
+            // ── Flow 7: Games & Advisories ───────────────────────────────────────
+            composable(Screen.SecurePhoneBuilderGame.route) {
+                SecurePhoneBuilderScreen(navController = navController)
+            }
+            composable(Screen.FakeAppDetectiveGame.route) {
+                FakeAppDetectiveScreen(navController = navController)
+            }
+            composable(Screen.FraudTrafficControlGame.route) {
+                FraudTrafficControlScreen(navController = navController)
+            }
+            composable(Screen.BubblePopScamGame.route) {
+                BubblePopScamScreen(navController = navController)
+            }
+            composable(Screen.ShieldDefenderGame.route) {
+                ShieldDefenderScreen(navController = navController)
+            }
+            composable(Screen.GameHub.route) {
+                GameHubScreen(navController = navController)
+            }
+            composable(Screen.AdvisoryList.route) {
+                AdvisoryListScreen(navController = navController)
+            }
+            composable(
+                route = Screen.AdvisoryDetail.route,
+                arguments = listOf(navArgument("advisoryId") { type = NavType.StringType }),
+            ) {
+                AdvisoryDetailScreen(navController = navController)
             }
         }
     }

@@ -4,7 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.sbi.surakshasathi.feature.awareness.data.local.entity.AdvisoryEntity
 import com.sbi.surakshasathi.feature.awareness.data.local.entity.BadgeEntity
+import com.sbi.surakshasathi.feature.awareness.data.local.entity.GameOutcomeEntity
 import com.sbi.surakshasathi.feature.awareness.data.local.entity.LessonEntity
 import com.sbi.surakshasathi.feature.awareness.data.local.entity.LessonProgressEntity
 import com.sbi.surakshasathi.feature.awareness.data.local.entity.SafetyNudgeEntity
@@ -63,4 +65,39 @@ interface SafetyNudgeDao {
     """,
     )
     suspend fun evictBeyond(maxCount: Int)
+}
+
+@Dao
+interface GameOutcomeDao {
+    @Query("SELECT * FROM game_outcomes WHERE game_id = :gameId ORDER BY completed_at_millis DESC")
+    fun observeByGame(gameId: String): Flow<List<GameOutcomeEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(outcome: GameOutcomeEntity)
+
+    /** Keep only the most recent [maxCount] rounds per game — bounded cache (§8B). */
+    @Query(
+        """
+        DELETE FROM game_outcomes WHERE id IN (
+            SELECT id FROM game_outcomes WHERE game_id = :gameId
+            ORDER BY completed_at_millis DESC LIMIT -1 OFFSET :maxCount
+        )
+    """,
+    )
+    suspend fun evictBeyond(
+        gameId: String,
+        maxCount: Int,
+    )
+}
+
+@Dao
+interface AdvisoryDao {
+    @Query("SELECT * FROM advisories WHERE language = :language")
+    fun observeByLanguage(language: String): Flow<List<AdvisoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(advisories: List<AdvisoryEntity>)
+
+    @Query("SELECT COUNT(*) FROM advisories WHERE language = :language")
+    suspend fun countForLanguage(language: String): Int
 }

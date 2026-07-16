@@ -60,4 +60,14 @@ data class Message(
     val ragWarningText: String? = null,
     /** Localized step-by-step guideline returned by the RAG agent, if escalated. */
     val ragGuidelineText: String? = null,
+    /** RAG agent's verdict (PHISHING/SCAM/SAFE), if escalated — see
+     * [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagVerdict]. Persisted (unlike the
+     * rest of [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning], which used to be
+     * discarded after the notification/card was shown) so an NCRP report auto-populated from this
+     * message can carry the RAG diagnosis, not just the on-device classification. */
+    val ragVerdict: String? = null,
+    val ragThreatType: String? = null,
+    /** RAG agent's confidence in its verdict, 0.0-1.0, if escalated. */
+    val ragConfidence: Float? = null,
+    val ragSuspiciousSignals: List<String> = emptyList(),
 )

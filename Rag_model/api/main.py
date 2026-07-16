@@ -7,12 +7,14 @@ share timeout/autoscaling config with the sub-1.5s message-scan path).
 from fastapi import FastAPI
 
 from api.routes.apk_scan import router as apk_scan_router
+from api.routes.dashboard import router as dashboard_router
 from api.routes.message_scan import router as message_scan_router
 
 app = FastAPI(title="SurakshaSathi RAG Backend", version="0.1.0")
 
 app.include_router(message_scan_router)
 app.include_router(apk_scan_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/healthz")

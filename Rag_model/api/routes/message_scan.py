@@ -1,7 +1,17 @@
 """POST /v1/scan/message -- Output 1: the endpoint the Android app calls once its on-device
-classifier flags an SMS/WhatsApp/Telegram message as spam. Runs L1 triage, the URL/QR/callback
-L2 lane relevant to what the message contains, a low-latency web-search corroboration in
-parallel, retrieves guideline docs, and returns a ThreatReport for immediate display to the user.
+classifier flags an SMS/WhatsApp/Telegram message as spam. Runs L1 triage, the URL/QR/callback/
+file L2 lane relevant to what the message (and any attachment) contains, a low-latency web-search
+corroboration in parallel, retrieves guideline docs, and returns a ThreatReport for immediate
+display to the user.
+
+Request is multipart/form-data, not JSON: the message fields ride as Form fields, and an optional
+single `attachment` (QR/image/video/APK-or-other-file) rides alongside them in the same request so
+the whole report is generated from one round trip. `attachment_type` tells this handler which L2
+lane to route the attachment through -- content bytes are never written to Blue DB or disk beyond
+a scratch temp file for APK static analysis (cleaned up before the handler returns); only derived
+analysis results (decoded QR payload, APK verdict, file metadata) reach the LLM prompt / Postgres.
+Image and video attachments have no content-level analyzer wired up (no CV/video model exists
+yet) -- they're accepted without error and noted to the LLM as unanalyzed, not silently dropped.
 
 Storing the message + assigning it to a cluster (Blue DB write, DenStream routing) happens here
 too, but AFTER the response is prepared -- a slow Postgres write must never add to the user-facing
@@ -9,12 +19,14 @@ latency budget captured in the response.
 """
 
 import asyncio
+import json
 import time
+from dataclasses import dataclass
 
-from fastapi import APIRouter
+from fastapi import APIRouter, File, Form, UploadFile
 from pydantic import BaseModel
 
-from common.schemas import ThreatReport
+from common.schemas import ContentType, ThreatReport
 from config.settings import settings
 from llm.groq_client import generate_threat_report
 from llm.prompt_templates import build_per_message_prompt
@@ -22,8 +34,14 @@ from url_qr_callback_engine.l1_triage import triage
 
 router = APIRouter()
 
+# What the Android client can put in `attachment_type`. "qr" and "file" get real structural
+# analysis and are forwarded to the RAG prompt; "image"/"video" are accepted but not analyzed.
+ANALYZED_ATTACHMENT_TYPES = {"qr", "file"}
+UNANALYZED_ATTACHMENT_TYPES = {"image", "video"}
 
-class MessageScanRequest(BaseModel):
+
+@dataclass
+class MessageScanRequest:
     message_id: str
     original_message: str
     language: str | None = None          # None -> detect_language() runs
@@ -80,12 +98,167 @@ async def _analyze_callback_safe(sender_id: str, callback_number: str, message_t
         return {"error": f"analysis failed: {e}"}
 
 
+async def _analyze_qr_safe(image_bytes: bytes) -> dict:
+    """L2 Path B. Decodes in-memory (numpy array), never written to disk or Blue DB -- only the
+    decoded payload + structural signal reach the LLM prompt."""
+    try:
+        import cv2
+        import numpy as np
+
+        from url_qr_callback_engine.qr_pipeline import analyze_qr_image
+
+        arr = np.frombuffer(image_bytes, dtype=np.uint8)
+        image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if image is None:
+            return {"error": "could not decode attachment as an image"}
+        result = await asyncio.to_thread(analyze_qr_image, image)
+        return {
+            "decoded_payload": result.decoded_payload,
+            "xgboost_quishing_score": result.xgboost_quishing_score,
+        }
+    except Exception as e:
+        return {"error": f"qr analysis failed: {e}"}
+
+
+async def _analyze_apk_bytes_safe(content: bytes, package_name: str, cert_sha256: str) -> dict:
+    """Reuses the same Lane A (identity/cloud) + Lane B (structural) + fusion pipeline as the
+    dedicated /v1/scan/apk endpoint, but inline as part of a message scan -- so an APK forwarded
+    alongside a suspicious message gets folded into the same report instead of a second round
+    trip. Written to a scratch temp file only because androguard needs a filesystem path; deleted
+    before this returns, never persisted."""
+    import hashlib
+    import tempfile
+    from pathlib import Path
+
+    from apk_engine.fusion_core import fuse
+    from apk_engine.lane_a_signature import lane_a_verdict
+    from apk_engine.lane_b_binctx import lane_b_analyze
+
+    try:
+        apk_file_sha256 = hashlib.sha256(content).hexdigest()
+        with tempfile.NamedTemporaryFile(suffix=".apk", delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        try:
+            loop = asyncio.get_event_loop()
+            lane_a_task = loop.run_in_executor(None, lane_a_verdict, package_name, cert_sha256, apk_file_sha256)
+            lane_b_task = loop.run_in_executor(None, lane_b_analyze, tmp_path)
+            fusion_result = await fuse(lane_a_task, lane_b_task)
+            lane_b_result = lane_b_task.result() if lane_b_task.done() else None
+            return {
+                "verdict": fusion_result.action,
+                "reason": fusion_result.reason,
+                "lane_a_verdict": lane_a_task.result(),
+                "triad_permissions": list(lane_b_result.triad_permissions_found) if lane_b_result else [],
+            }
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+    except Exception as e:
+        return {"error": f"apk analysis failed: {e}"}
+
+
+def _is_apk(filename: str | None, content_type_header: str | None) -> bool:
+    return bool(
+        (filename and filename.lower().endswith(".apk"))
+        or content_type_header == "application/vnd.android.package-archive"
+    )
+
+
+async def _analyze_file_attachment(
+    content: bytes, filename: str | None, content_type_header: str | None, package_name: str, cert_sha256: str
+) -> tuple[dict, bool]:
+    """`attachment_type == "file"`: routes to the APK lanes if it looks like an APK, otherwise
+    there's no dedicated structural analyzer for arbitrary file types yet -- returns metadata only
+    so the LLM at least knows a file was attached, rather than the attachment vanishing silently.
+    Returns (analysis_dict, is_apk)."""
+    if _is_apk(filename, content_type_header):
+        return await _analyze_apk_bytes_safe(content, package_name, cert_sha256), True
+    return (
+        {
+            "filename": filename,
+            "content_type": content_type_header,
+            "size_bytes": len(content),
+            "note": "generic file attachment -- no dedicated structural analyzer wired for this file type yet",
+        },
+        False,
+    )
+
+
+def _note_unanalyzed_media(attachment_type: str, filename: str | None, content_type_header: str | None, size: int) -> dict:
+    return {
+        "attachment_type": attachment_type,
+        "filename": filename,
+        "content_type": content_type_header,
+        "size_bytes": size,
+        "note": f"{attachment_type} attachment received but not content-analyzed (no CV/video "
+        "model wired up) -- not stored, flagged here only for transparency",
+    }
+
+
+async def _localize_report(report: ThreatReport, language: str) -> ThreatReport:
+    """Translates the LLM's (always-English) explanation/action text into the user's selected
+    language via a second Google Translate pass -- see language/translate.translate_from_english
+    for why this isn't a prompt instruction to the LLM instead. Never fails the request: on
+    translation failure (no API key, quota, network) the English text is kept and `language` stays
+    "en", same graceful-degradation shape as the rest of this handler."""
+    if language == "en":
+        return report
+
+    from language.translate import translate_from_english
+
+    try:
+        explanation, action = await asyncio.gather(
+            asyncio.to_thread(translate_from_english, report.plain_language_explanation, language),
+            asyncio.to_thread(translate_from_english, report.recommended_action, language),
+        )
+        return report.model_copy(
+            update={
+                "plain_language_explanation": explanation,
+                "recommended_action": action,
+                "language": language,
+            }
+        )
+    except Exception as e:
+        print(f"_localize_report failed for language={language!r}, keeping English text: {e}")
+        return report
+
+
 @router.post("/v1/scan/message", response_model=MessageScanResponse)
-async def scan_message(req: MessageScanRequest) -> MessageScanResponse:
+async def scan_message(
+    message_id: str = Form(...),
+    original_message: str = Form(...),
+    language: str | None = Form(None),
+    callback_number: str | None = Form(None),
+    ml_model_metadata: str | None = Form(None),  # JSON-encoded dict, since Form fields are strings
+    attachment_type: str | None = Form(None),  # "qr" | "image" | "video" | "file"
+    package_name: str | None = Form(None),  # only used when attachment_type == "file" and it's an APK
+    cert_sha256: str | None = Form(None),
+    attachment: UploadFile | None = File(None),
+) -> MessageScanResponse:
     start = time.monotonic()
 
     from language.detect import detect_language
     from language.translate import translate_to_english
+
+    parsed_metadata = None
+    if ml_model_metadata:
+        try:
+            parsed_metadata = json.loads(ml_model_metadata)
+        except json.JSONDecodeError:
+            # Malformed metadata from the client must not fail the whole scan -- the classifier
+            # metadata is supplementary context for the LLM, not load-bearing.
+            print(f"ml_model_metadata was not valid JSON, ignoring: {ml_model_metadata!r}")
+    attachment_bytes = await attachment.read() if attachment is not None else None
+    has_image_attachment = attachment_type in ("qr", "image") and attachment_bytes is not None
+
+    req = MessageScanRequest(
+        message_id=message_id,
+        original_message=original_message,
+        language=language,
+        ml_model_metadata=parsed_metadata,
+        has_image_attachment=has_image_attachment,
+        callback_number=callback_number,
+    )
 
     # Blocking HTTP calls are pushed to a thread so they don't stall the event loop -- otherwise
     # they'd block every OTHER concurrent request this server is handling, not just this one.
@@ -100,6 +273,14 @@ async def scan_message(req: MessageScanRequest) -> MessageScanResponse:
 
     triage_result = triage(req.original_message, req.has_image_attachment)
 
+    # A phone number doesn't have to arrive via the explicit `callback_number` field -- one
+    # regex-extracted straight out of the message text is just as real a vishing signal, so it
+    # gets the same Twilio/DLT verification. Explicit `callback_number` (e.g. the number the
+    # Android call-screen actually dialed) wins if both are present, since it's ground truth.
+    resolved_callback_number = req.callback_number or (
+        triage_result.phone_numbers[0] if triage_result.phone_numbers else None
+    )
+
     # Every L2 lane + web corroboration + guideline retrieval genuinely run concurrently now
     # (previously several of these were blocking calls sitting in an `async def`, which stalled
     # the event loop and silently serialized everything behind them -- asyncio.to_thread fixes
@@ -110,16 +291,42 @@ async def scan_message(req: MessageScanRequest) -> MessageScanResponse:
     }
     if triage_result.urls and not triage_result.bloom_hit:
         tasks["url_analysis"] = asyncio.create_task(_analyze_url_safe(triage_result.urls[0]))
-    if req.callback_number:
+    if resolved_callback_number:
         tasks["callback_analysis"] = asyncio.create_task(
             _analyze_callback_safe(
-                req.ml_model_metadata.get("sender", "") if req.ml_model_metadata else "",
-                req.callback_number,
+                (req.ml_model_metadata or {}).get("sender", ""),
+                resolved_callback_number,
                 message_english,
             )
         )
 
+    is_apk_attachment = False
+    unanalyzed_media: dict | None = None
+    if attachment_bytes is not None and attachment_type == "qr":
+        tasks["qr_analysis"] = asyncio.create_task(_analyze_qr_safe(attachment_bytes))
+    elif attachment_bytes is not None and attachment_type == "file":
+        tasks["file_analysis"] = asyncio.create_task(
+            _analyze_file_attachment(
+                attachment_bytes, attachment.filename, attachment.content_type, package_name or "", cert_sha256 or ""
+            )
+        )
+    elif attachment_bytes is not None and attachment_type in UNANALYZED_ATTACHMENT_TYPES:
+        # Cheap metadata only -- no need for a background task for this one.
+        unanalyzed_media = _note_unanalyzed_media(
+            attachment_type, attachment.filename, attachment.content_type, len(attachment_bytes)
+        )
+
     results = dict(zip(tasks.keys(), await asyncio.gather(*tasks.values())))
+
+    if "file_analysis" in results:
+        results["file_analysis"], is_apk_attachment = results["file_analysis"]
+
+    # A QR that decodes to a URL gets chased through the same URL lane a plain-text link would --
+    # this only fires when the QR lane actually found a URL, so it doesn't cost anything for QR
+    # codes encoding something else (a UPI string, plain text, etc).
+    qr_result = results.get("qr_analysis")
+    if qr_result and isinstance(qr_result.get("decoded_payload"), str) and qr_result["decoded_payload"].startswith("http"):
+        results["url_analysis_from_qr"] = await _analyze_url_safe(qr_result["decoded_payload"])
 
     detection_results: dict = {
         "urls_found": triage_result.urls,
@@ -128,8 +335,16 @@ async def scan_message(req: MessageScanRequest) -> MessageScanResponse:
     }
     if "url_analysis" in results:
         detection_results["url_analysis"] = results["url_analysis"]
+    if "url_analysis_from_qr" in results:
+        detection_results["url_analysis_from_qr"] = results["url_analysis_from_qr"]
     if "callback_analysis" in results:
         detection_results["callback_analysis"] = results["callback_analysis"]
+    if "qr_analysis" in results:
+        detection_results["qr_analysis"] = results["qr_analysis"]
+    if "file_analysis" in results:
+        detection_results["file_analysis"] = results["file_analysis"]
+    if unanalyzed_media:
+        detection_results["unanalyzed_media_attachment"] = unanalyzed_media
 
     retrieved_docs = results["retrieved_docs"]
     web_corroboration = results["web_corroboration"]
@@ -142,44 +357,35 @@ async def scan_message(req: MessageScanRequest) -> MessageScanResponse:
         ml_model_metadata=req.ml_model_metadata,
     )
     report = await asyncio.to_thread(generate_threat_report, prompt)
+    report = await _localize_report(report, language)
 
-    asyncio.create_task(_persist_message_async(req, language, message_english))
+    content_type = _determine_content_type(triage_result, attachment_type, is_apk_attachment)
+    asyncio.create_task(_persist_message_async(req, language, message_english, content_type))
 
     return MessageScanResponse(report=report, latency_ms=int((time.monotonic() - start) * 1000))
 
 
-_guideline_embedder = None  # lazy singleton -- loading the sentence-transformer per request would be slow
-
-
-def _get_guideline_embedder():
-    global _guideline_embedder
-    if _guideline_embedder is None:
-        from ingestion.case_notes_pipeline import LocalMiniLmEmbedder
-
-        _guideline_embedder = LocalMiniLmEmbedder()
-    return _guideline_embedder
+def _determine_content_type(triage_result, attachment_type: str | None, is_apk_attachment: bool) -> ContentType:
+    # Priority follows specificity, not arrival order: an APK attachment is the strongest signal
+    # about what this message actually is, a QR code is more specific than "contains a URL", etc.
+    if is_apk_attachment:
+        return ContentType.apk
+    if attachment_type == "qr":
+        return ContentType.qr
+    if triage_result.urls:
+        return ContentType.url
+    if triage_result.phone_numbers:
+        return ContentType.callback
+    return ContentType.text_only
 
 
 def _retrieve_guideline_docs(message_english: str) -> list[str]:
-    if not settings.postgres_dsn:
-        return []  # degrade gracefully -- Cloud SQL not provisioned yet
-    try:
-        from db.postgres_client import get_session_factory
-        from db.vector_store import semantic_search
+    from db.vector_store import retrieve_guideline_docs
 
-        # guideline_docs uses the same 384-dim all-MiniLM-L6-v2 space as ingest_sbi_documents.py --
-        # NOT clustering.embedding's PCA-reduced 96-dim space, which is for message clustering only.
-        query_embedding = _get_guideline_embedder().embed([message_english])[0]
-
-        Session = get_session_factory()
-        with Session() as session:
-            docs = semantic_search(session, query_embedding=query_embedding, top_k=3)
-            return [d.chunk_text for d in docs]
-    except Exception:
-        return []
+    return retrieve_guideline_docs(message_english, top_k=3)
 
 
-def _persist_message_blocking(req: MessageScanRequest, language: str, message_english: str) -> None:
+def _persist_message_blocking(req: MessageScanRequest, language: str, message_english: str, content_type: ContentType) -> None:
     from datetime import datetime, timezone
 
     from db.postgres_client import Message, get_session_factory
@@ -194,7 +400,7 @@ def _persist_message_blocking(req: MessageScanRequest, language: str, message_en
                 message_english=message_english,
                 needs_translation=(language != "en"),
                 channel="sms",
-                content_type="text_only",
+                content_type=content_type.value,
                 region=None,
                 sender=(req.ml_model_metadata or {}).get("sender"),
                 cluster_id=None,  # assigned by the DenStream router, not inline in the request path
@@ -204,7 +410,9 @@ def _persist_message_blocking(req: MessageScanRequest, language: str, message_en
         session.commit()
 
 
-async def _persist_message_async(req: MessageScanRequest, language: str, message_english: str) -> None:
+async def _persist_message_async(
+    req: MessageScanRequest, language: str, message_english: str, content_type: ContentType
+) -> None:
     if not settings.postgres_dsn:
         return  # Cloud SQL not provisioned yet -- nothing to persist to
     try:
@@ -213,6 +421,6 @@ async def _persist_message_async(req: MessageScanRequest, language: str, message
         # event loop the moment the loop picks this task up, which delayed flushing the client's
         # HTTP response by several seconds in testing (measured latency_ms was fine; wall-clock
         # wasn't, because the response bytes hadn't actually been written to the socket yet).
-        await asyncio.to_thread(_persist_message_blocking, req, language, message_english)
+        await asyncio.to_thread(_persist_message_blocking, req, language, message_english, content_type)
     except Exception as e:
         print(f"_persist_message_async failed (non-fatal, response already sent): {e}")

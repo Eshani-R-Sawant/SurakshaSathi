@@ -20,13 +20,44 @@ interface NcrpApi {
 
 @Serializable
 data class NcrpReportRequestDto(
-    val apkSha256: String?,
-    val installSource: String?,
+    val reportSource: String,
+    val apkEvidence: ApkEvidenceDto?,
+    val messageEvidence: OffendingMessageDto?,
+    val ragDiagnosis: RagDiagnosisDto?,
+    val userDescription: String?,
     val deviceIntegrity: DeviceIntegrityDto,
-    val offendingMessage: OffendingMessageDto?,
     val location: LocationDto?,
+    val complainant: ComplainantDto,
     val reportedAtMillis: Long,
     val reporterConsent: Boolean,
+)
+
+@Serializable
+data class ApkEvidenceDto(
+    val sha256: String?,
+    val packageName: String?,
+    val installSource: String?,
+    val verdict: String?,
+    val isImpersonation: Boolean,
+    val tierReached: String?,
+    val localRiskScore: Float?,
+    val triggeredRuleIds: List<String>,
+    val engineHits: Int?,
+)
+
+@Serializable
+data class RagDiagnosisDto(
+    val verdict: String?,
+    val threatType: String?,
+    val confidence: Float?,
+    val suspiciousSignals: List<String>,
+)
+
+@Serializable
+data class ComplainantDto(
+    val name: String?,
+    val phone: String?,
+    val email: String?,
 )
 
 @Serializable

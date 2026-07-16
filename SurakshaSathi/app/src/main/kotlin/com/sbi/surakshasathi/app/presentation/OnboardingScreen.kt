@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.sbi.surakshasathi.core.designsystem.theme.SbiBlue80
-import com.sbi.surakshasathi.core.designsystem.theme.SbiGold80
+import com.sbi.surakshasathi.core.designsystem.theme.BankBlue80
+import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 
 /**
  * Onboarding screen — explains SurakshaSathi's mission to the user.
@@ -33,15 +33,15 @@ fun OnboardingScreen(onComplete: () -> Unit) {
         listOf(
             OnboardingPage(
                 icon = Icons.Filled.Shield,
-                title = "Your SBI Guardian",
+                title = "Your Bank Guardian",
                 description = "SurakshaSathi detects fake YONO apps, phishing SMS, and WhatsApp scams before they steal your money.",
-                iconColor = SbiBlue80,
+                iconColor = BankBlue80,
             ),
             OnboardingPage(
                 icon = Icons.Filled.Security,
                 title = "Smart Detection",
                 description = "On-device AI + cloud intelligence checks every message and APK in real-time — no data leaves your phone without consent.",
-                iconColor = SbiGold80,
+                iconColor = BankGold80,
             ),
             OnboardingPage(
                 icon = Icons.Filled.School,

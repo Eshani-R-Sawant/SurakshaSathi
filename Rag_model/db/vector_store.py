@@ -8,7 +8,19 @@ from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
+from config.settings import settings
 from db.postgres_client import GuidelineDoc
+
+_guideline_embedder = None  # lazy singleton -- loading the sentence-transformer per call would be slow
+
+
+def _get_guideline_embedder():
+    global _guideline_embedder
+    if _guideline_embedder is None:
+        from ingestion.case_notes_pipeline import LocalMiniLmEmbedder
+
+        _guideline_embedder = LocalMiniLmEmbedder()
+    return _guideline_embedder
 
 
 def upsert_guideline_chunks(session: Session, chunks: list[dict], batch_size: int = 500) -> None:
@@ -52,3 +64,31 @@ def semantic_search(session: Session, query_embedding: list[float], top_k: int =
         .limit(top_k)
         .all()
     )
+
+
+def retrieve_guideline_docs(text: str, top_k: int = 3) -> list[str]:
+    """Embeds [text] and returns the top_k nearest fraud-education reference chunks as plain
+    strings, ready to drop into an LLM prompt. Shared by both RAG-generation call sites:
+    api/routes/message_scan.py (per-message scan) and alerting/daily_job.py (threshold-triggered
+    regional alerts, using a cluster's representative sample_message as [text]) -- both need the
+    same "generate a real ThreatReport grounded in retrieved guidance" behavior, not just a raw
+    LLM call with no retrieval.
+
+    Degrades gracefully (empty list) if Cloud SQL isn't provisioned or the embed/query fails --
+    the caller's LLM prompt already handles an empty retrieved_docs list.
+    """
+    if not settings.postgres_dsn:
+        return []
+    try:
+        from db.postgres_client import get_session_factory
+
+        # guideline_docs uses the same 384-dim all-MiniLM-L6-v2 space as ingest_sbi_documents.py --
+        # NOT clustering.embedding's PCA-reduced 96-dim space, which is for message clustering only.
+        query_embedding = _get_guideline_embedder().embed([text])[0]
+
+        Session = get_session_factory()
+        with Session() as session:
+            docs = semantic_search(session, query_embedding=query_embedding, top_k=top_k)
+            return [d.chunk_text for d in docs]
+    except Exception:
+        return []

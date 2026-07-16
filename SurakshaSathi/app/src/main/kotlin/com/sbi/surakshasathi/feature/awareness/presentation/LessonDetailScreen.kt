@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.sbi.surakshasathi.core.designsystem.theme.SbiGold80
+import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 import com.sbi.surakshasathi.core.designsystem.theme.safeColor
 
 /** "Spot the scam" quiz-format lesson (§7c 5.2). */
@@ -68,7 +68,7 @@ fun LessonDetailScreen(
                         Icon(
                             Icons.Filled.EmojiEvents,
                             contentDescription = null,
-                            tint = if (perfect) SbiGold80 else MaterialTheme.colorScheme.safeColor,
+                            tint = if (perfect) BankGold80 else MaterialTheme.colorScheme.safeColor,
                             modifier = Modifier.size(72.dp),
                         )
                         Spacer(Modifier.height(16.dp))

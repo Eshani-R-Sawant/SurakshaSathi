@@ -17,7 +17,22 @@ import javax.inject.Inject
 sealed interface RagWarningUiState {
     data object Loading : RagWarningUiState
 
-    data class Content(val message: Message, val warning: String, val guideline: String) : RagWarningUiState
+    /**
+     * [verdict]/[threatType]/[confidence]/[suspiciousSignals] are the RAG agent's full structured
+     * diagnosis (see [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning]) — these
+     * used to be computed and then discarded after only [warning]/[guideline] were shown; they're
+     * now threaded through so the in-app card matches the richness of the backend's actual
+     * ThreatReport, not just two lines of prose.
+     */
+    data class Content(
+        val message: Message,
+        val warning: String,
+        val guideline: String,
+        val verdict: String,
+        val threatType: String,
+        val confidence: Float,
+        val suspiciousSignals: List<String>,
+    ) : RagWarningUiState
 
     data class Error(val message: String) : RagWarningUiState
 }
@@ -63,6 +78,10 @@ class RagWarningViewModel
                                     message = message,
                                     warning = message.ragWarningText,
                                     guideline = message.ragGuidelineText,
+                                    verdict = message.ragVerdict ?: "",
+                                    threatType = message.ragThreatType ?: "",
+                                    confidence = message.ragConfidence ?: 0f,
+                                    suspiciousSignals = message.ragSuspiciousSignals,
                                 )
                         } else {
                             escalateNow(message)
@@ -83,6 +102,10 @@ class RagWarningViewModel
                             message = message,
                             warning = result.data.warning,
                             guideline = result.data.guideline,
+                            verdict = result.data.verdict.name,
+                            threatType = result.data.threatType,
+                            confidence = result.data.confidence,
+                            suspiciousSignals = result.data.suspiciousSignals,
                         )
                 is Result.Error ->
                     _uiState.value =

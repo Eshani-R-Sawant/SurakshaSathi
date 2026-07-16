@@ -12,9 +12,9 @@ object BundledLessons {
     val ENGLISH: List<Lesson> =
         listOf(
             Lesson(
-                id = "real_vs_fake_sbi",
-                title = "Real vs Fake SBI Apps",
-                description = "Learn the signs that separate the official YONO app from a fake one.",
+                id = "real_vs_fake_bank_app",
+                title = "Real vs Fake Bank Apps",
+                description = "Learn the signs that separate the official YONO Bank app from a fake one.",
                 language = "en",
                 badgeIdOnCompletion = "badge_yono_expert",
                 quiz =
@@ -23,7 +23,7 @@ object BundledLessons {
                             "A message asks you to install YONO from a link in WhatsApp. What should you do?",
                             listOf(
                                 "Tap the link and install it",
-                                "Only install YONO from the Play Store or sbi.co.in",
+                                "Only install YONO from the Play Store or bankname.co.in",
                                 "Install it if the icon looks right",
                                 "Forward it to a friend to check",
                             ),
@@ -33,7 +33,7 @@ object BundledLessons {
                             "Which of these is the strongest sign an app is fake, even if the icon and name look right?",
                             listOf(
                                 "It asks for your name",
-                                "Its signing certificate doesn't match SBI's official one",
+                                "Its signing certificate doesn't match the Bank's official one",
                                 "It has a splash screen",
                                 "It's in English",
                             ),
@@ -60,10 +60,10 @@ object BundledLessons {
                 quiz =
                     listOf(
                         QuizQuestion(
-                            "Someone claiming to be an SBI officer calls and asks for your OTP to \"reverse a wrong transaction.\" What do you do?",
+                            "Someone claiming to be a Bank officer calls and asks for your OTP to \"reverse a wrong transaction.\" What do you do?",
                             listOf(
                                 "Share it, they sound official",
-                                "Hang up — SBI staff never ask for your OTP",
+                                "Hang up — Bank staff never ask for your OTP",
                                 "Share only the first 3 digits",
                                 "Ask them to call back later",
                             ),
@@ -83,7 +83,7 @@ object BundledLessons {
                             "If you accidentally shared your OTP with a scammer, what's the FIRST thing to do?",
                             listOf(
                                 "Wait and see if money is deducted",
-                                "Immediately call SBI's helpline / block your card via the app",
+                                "Immediately call the Bank's helpline / block your card via the app",
                                 "Change your phone's lock screen PIN",
                                 "Delete the SMS",
                             ),
@@ -110,10 +110,10 @@ object BundledLessons {
                             correctOptionIndex = 1,
                         ),
                         QuizQuestion(
-                            "You want to be extra sure a QR code leads to the real SBI site. What should SurakshaSathi's scanner check?",
+                            "You want to be extra sure a QR code leads to the real Bank site. What should SurakshaSathi's scanner check?",
                             listOf(
                                 "Only the QR code's color",
-                                "The domain/package against SBI's official allow-list and signing certificate",
+                                "The domain/package against the Bank's official allow-list and signing certificate",
                                 "How many times the code has been scanned",
                                 "The QR code's size",
                             ),

@@ -2,7 +2,7 @@ package com.sbi.surakshasathi.feature.messagescan
 
 import com.sbi.surakshasathi.feature.messagescan.data.classifier.HybridDecisionEngine
 import com.sbi.surakshasathi.feature.messagescan.data.classifier.RuleBasedClassifier
-import com.sbi.surakshasathi.feature.messagescan.data.classifier.TfLiteSpamClassifier
+import com.sbi.surakshasathi.feature.messagescan.data.classifier.PyTorchSpamClassifier
 import com.sbi.surakshasathi.feature.messagescan.domain.model.MessageClassification
 import io.mockk.every
 import io.mockk.mockk
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 
 class HybridDecisionEngineTest {
 
-    private val mlClassifier = mockk<TfLiteSpamClassifier>()
+    private val mlClassifier = mockk<PyTorchSpamClassifier>()
     private val ruleClassifier = mockk<RuleBasedClassifier>()
     private val engine = HybridDecisionEngine(mlClassifier, ruleClassifier)
 

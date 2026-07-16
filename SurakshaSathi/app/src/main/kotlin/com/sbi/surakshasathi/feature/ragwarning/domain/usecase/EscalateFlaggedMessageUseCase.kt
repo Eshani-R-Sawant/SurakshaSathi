@@ -31,7 +31,15 @@ class EscalateFlaggedMessageUseCase
             }
 
             return analyzeMessageWithRagUseCase(message).onSuccess { warning ->
-                messageRepository.saveRagWarning(message.id, warning.warning, warning.guideline)
+                messageRepository.saveRagWarning(
+                    messageId = message.id,
+                    warning = warning.warning,
+                    guideline = warning.guideline,
+                    verdict = warning.verdict.name,
+                    threatType = warning.threatType,
+                    confidence = warning.confidence,
+                    suspiciousSignals = warning.suspiciousSignals,
+                )
                 ragWarningDispatcher.notify(message, warning)
             }
         }

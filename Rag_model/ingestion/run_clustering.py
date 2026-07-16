@@ -1,10 +1,16 @@
 """Runs the full clustering pipeline over the metadata-enriched Blue DB messages:
-text -> PCA-reduced embedding -> + region/persona/message_type weighted dims -> DenStream online
+text -> PCA-reduced embedding -> + region/message_type/persona weighted dims -> DenStream online
 micro-cluster routing (no fading, per spec) -> offline DBSCAN macro-clustering.
 
-Per instruction: clustering should be driven primarily by region, persona, and message type, with
-the text embedding as a secondary refinement within those buckets -- hence the three weight
-multipliers in config/settings.py all being > 1.0 relative to the (normalized) text-PCA distance.
+Clustering is driven primarily by region and message type, with persona as a low-weight
+refinement and the text embedding as a secondary refinement within those buckets -- hence
+region/message_type's weight multipliers in config/settings.py being > 1.0 relative to the
+(normalized) text-PCA distance, while persona_weight_multiplier is deliberately kept well below
+1.0 (see that setting's comment for the fragmentation regression a full-weight persona axis caused
+previously, and why this weight must stay low). Persona is ALSO still recorded per cluster as a
+majority vote over its members (for cases where a cluster ends up mixed) -- both mechanisms serve
+alerting/targeting, but the feature-vector axis is what actually lets a single-persona cluster
+form and be independently alerted when it's genuinely distinct from a mixed-persona one.
 
 Input:  data/processed/blue_db_messages_enriched.csv (from enrich_blue_db_metadata.py)
 Output: data/processed/blue_db_messages_clustered.csv  (messages + assigned cluster_id)
@@ -32,9 +38,9 @@ RAG_MODEL_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = RAG_MODEL_ROOT / "data" / "processed"
 
 REGION_DIMS = 2
-PERSONA_DIMS = len(ALL_PERSONAS)
 MESSAGE_TYPE_DIMS = len(ALL_MESSAGE_TYPES)
-TEXT_DIMS = settings.embedding_dim_reduced - REGION_DIMS - PERSONA_DIMS - MESSAGE_TYPE_DIMS
+PERSONA_DIMS = len(ALL_PERSONAS)
+TEXT_DIMS = settings.embedding_dim_reduced - REGION_DIMS - MESSAGE_TYPE_DIMS - PERSONA_DIMS
 
 
 def majority(values: list) -> str:
@@ -44,11 +50,11 @@ def majority(values: list) -> str:
     return Counter(values).most_common(1)[0][0]
 
 
-def build_feature_vector(text_vector: np.ndarray, region: str, persona: str, message_type: str) -> np.ndarray:
+def build_feature_vector(text_vector: np.ndarray, region: str, message_type: str, persona: str) -> np.ndarray:
     region_vec = weighted_region_features(region)
-    persona_vec = one_hot(persona, ALL_PERSONAS, settings.persona_weight_multiplier)
     message_type_vec = one_hot(message_type, ALL_MESSAGE_TYPES, settings.message_type_weight_multiplier)
-    return np.concatenate([text_vector, region_vec, persona_vec, message_type_vec])
+    persona_vec = one_hot(persona, ALL_PERSONAS, settings.persona_weight_multiplier)
+    return np.concatenate([text_vector, region_vec, message_type_vec, persona_vec])
 
 
 def run():
@@ -67,7 +73,7 @@ def run():
     router = DenStreamRouter()
     assigned_cluster_ids = []
     for i, row in df.iterrows():
-        full_vector = build_feature_vector(text_vectors[i], row["region"], row["persona"], row["message_type"])
+        full_vector = build_feature_vector(text_vectors[i], row["region"], row["message_type"], row["persona"])
         cluster_id = router.insert(row["message_id"], full_vector)
         assigned_cluster_ids.append(cluster_id)
 

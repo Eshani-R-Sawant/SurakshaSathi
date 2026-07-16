@@ -16,7 +16,7 @@ class RuleBasedClassifierTest {
     fun `test kyc expiry rule`() {
         val text = "Dear Customer, your SBI YONO account has been suspended. Please update your KYC immediately to avoid block."
         val score = classifier.classifyWithSender(text, "SBIOTP")
-        // Should trigger URGENCY_KYC (0.3), IMPERSONATES_SBI (0.3)
+        // Should trigger URGENCY_KYC (0.3), IMPERSONATES_KNOWN_BANK (0.3)
         assertTrue(score > 0.5f)
     }
 
@@ -32,7 +32,7 @@ class RuleBasedClassifierTest {
     fun `test apk download warning`() {
         val text = "Install official SBI update from http://fake-sbi.com/yono.apk now."
         val score = classifier.classifyWithSender(text, "SBIYONO")
-        // Should trigger URL_PRESENT (0.1), APK_DOWNLOAD_URL (0.4), IMPERSONATES_SBI (0.3), INSTALL_PROMPT (0.3)
+        // Should trigger URL_PRESENT (0.1), APK_DOWNLOAD_URL (0.4), IMPERSONATES_KNOWN_BANK (0.3), INSTALL_PROMPT (0.3)
         assertTrue(score > 0.8f)
     }
 

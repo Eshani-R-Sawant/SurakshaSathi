@@ -33,12 +33,20 @@ class MessageRecord(BaseModel):
     channel: Channel = Channel.sms
     content_type: ContentType = ContentType.text_only
     region: Optional[str] = None        # normalized state/city, not raw lat-long
-    # persona/message_type are the PRIMARY clustering signal (see clustering/run_clustering.py),
-    # not just descriptive metadata. persona is denormalized from the reporting user's UserMap
-    # (set once at app install); message_type is derived from the message text itself.
+    # message_type + region + persona are the clustering signal (see
+    # clustering/run_clustering.py::build_feature_vector). persona is denormalized from the
+    # reporting user's UserMap (set once at app install) and also recorded per-cluster as a
+    # majority vote for alerting/targeting.
     persona: Optional[str] = None       # see clustering/persona.py for the fixed category set
     message_type: Optional[str] = None  # see clustering/message_type.py
-    sender: Optional[str] = None
+    sender: Optional[str] = None        # the fraud message's spoofed originator, NOT the recipient
+    # Recipient identity -- who reported/received this message. Real installs populate this from
+    # the reporting device's UserMap entry; synthetic data populates it via
+    # ingestion/enrich_blue_db_metadata.py::_synth_recipient. This is how alerting/daily_job.py
+    # knows concretely who to notify once a cluster crosses its threshold (see
+    # db/seed/seed_blue_db.py::seed_users, which derives UserMap rows from these two columns).
+    user_name: Optional[str] = None
+    user_phone: Optional[str] = None
     cluster_id: Optional[str] = None
     timestamp: datetime
     ml_model_metadata: Optional[dict] = None  # from Android client, online-only, never persisted long-term
@@ -67,8 +75,13 @@ class ClusterRecord(BaseModel):
 # ---- Blue DB: `user_map` collection ----
 class UserMapRecord(BaseModel):
     """Set once at app install (region + persona) -- these two fields get denormalized onto
-    every MessageRecord this user reports, and are the primary clustering signal."""
+    every MessageRecord this user reports, and are the clustering signal (with message_type)."""
     user_id: str
+    display_name: Optional[str] = None    # real installs: user-provided display name, not legal name
+    phone_number: Optional[str] = None    # E.164-ish; needed so alerting/daily_job.py has a concrete
+    # recipient per (region, persona) cluster to notify, not just an anonymous count. Real installs
+    # populate this at consent-gated onboarding, same as any other PII (see privacy/pii_redaction.py
+    # for the redaction discipline applied to free-text fields elsewhere in this service).
     region: Optional[str] = None
     persona: Optional[str] = None  # see clustering/persona.py for the fixed category set
     lat: Optional[float] = None
@@ -126,3 +139,7 @@ class ThreatReport(BaseModel):
     technical_evidence: TechnicalEvidence
     plain_language_explanation: str
     recommended_action: str
+    # BCP-47-ish tag (hi, mr, ta, en, ...) the two fields above are actually written in --
+    # the LLM is instructed (see llm/prompt_templates.build_per_message_prompt) to localize
+    # plain_language_explanation/recommended_action into this language, not just detect it.
+    language: str = "en"

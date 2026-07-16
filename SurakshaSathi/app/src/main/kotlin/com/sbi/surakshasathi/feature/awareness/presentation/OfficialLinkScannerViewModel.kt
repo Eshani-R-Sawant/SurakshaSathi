@@ -20,7 +20,7 @@ sealed interface ScannerUiState {
     data class Result(val result: OfficialLinkCheckResult) : ScannerUiState
 }
 
-/** Backs the "Is this the real SBI app?" scanner (§7c 5.1). */
+/** Backs the "Is this the real Bank app?" scanner (§7c 5.1). */
 @HiltViewModel
 class OfficialLinkScannerViewModel
     @Inject

@@ -5,7 +5,10 @@ import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.sbi.surakshasathi.core.datastore.UserPreferencesDataStore
+import com.sbi.surakshasathi.core.location.LocationRegionResolver
+import com.sbi.surakshasathi.feature.frauddashboard.data.worker.RegionalAlertSyncWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +29,7 @@ class PermissionsViewModel
     constructor(
         @ApplicationContext private val context: Context,
         private val preferences: UserPreferencesDataStore,
+        private val locationRegionResolver: LocationRegionResolver,
     ) : ViewModel() {
         private val _notificationListenerGranted = MutableStateFlow(isNotificationListenerEnabled())
         val notificationListenerGranted: StateFlow<Boolean> = _notificationListenerGranted.asStateFlow()
@@ -50,7 +54,14 @@ class PermissionsViewModel
 
         fun recordLocationConsent(granted: Boolean) =
             viewModelScope.launch {
-                if (granted) preferences.recordConsent(location = true)
+                if (granted) {
+                    preferences.recordConsent(location = true)
+                    // Best-effort — resolves to the nearest named region for the Feature Map/Alerts
+                    // regional targeting (§7, §7c). Silently no-ops if no fix is available yet; the
+                    // Regional Digest screen's manual picker covers that case.
+                    val region = locationRegionResolver.resolveAndStoreRegion()
+                    if (region != null) RegionalAlertSyncWorker.triggerOnce(WorkManager.getInstance(context))
+                }
             }
 
         fun completeOnboarding() =

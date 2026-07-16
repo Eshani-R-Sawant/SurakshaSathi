@@ -25,14 +25,14 @@ data class ApkScanResult(
     val appLabel: String,
     val sha256: String,
     val verdict: ApkVerdict,
-    /** True if the package impersonates SBI/YONO branding without a matching SBI signing cert. */
+    /** True if the package impersonates Bank/YONO branding without a matching Bank signing cert. */
     val isImpersonation: Boolean,
     val tierReached: ScanTier,
-    /** Human-readable source of the verdict, e.g. "local_hash_cache", "sbi_threat_api", "mamadroid". */
+    /** Human-readable source of the verdict, e.g. "local_hash_cache", "bank_threat_api", "mamadroid". */
     val source: String,
     /** Local Tier-1 behavior-rule engine's aggregated risk contribution, 0.0–1.0. */
     val localRiskScore: Float = 0f,
-    /** Rule IDs that fired in the local behavior engine (SBI-R01…R07). */
+    /** Rule IDs that fired in the local behavior engine (BANK-R01…R07). */
     val triggeredRuleIds: List<String> = emptyList(),
     /** Number of engines that flagged this hash in the Tier-2 multi-engine lookup, if reached. */
     val engineHits: Int = 0,

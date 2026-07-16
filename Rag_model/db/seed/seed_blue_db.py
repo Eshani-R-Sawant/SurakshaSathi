@@ -8,6 +8,7 @@ public IP (rather than localhost) turns thousands of rows into thousands of roun
 first run of this script that way effectively hung; batched bulk upserts finish in seconds.
 """
 
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,7 +17,7 @@ import pandas as pd
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from config.settings import settings
-from db.postgres_client import Cluster, Message, get_engine, get_session_factory, init_db
+from db.postgres_client import Cluster, Message, UserMap, get_engine, get_session_factory, init_db
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "processed"
 BATCH_SIZE = 500
@@ -31,6 +32,54 @@ def _bulk_upsert(session, model, rows: list[dict], conflict_col: str) -> None:
         session.execute(stmt)
         session.commit()
         print(f"  {model.__tablename__}: {min(i + BATCH_SIZE, len(rows))}/{len(rows)}", flush=True)
+
+
+def _user_id_for_phone(phone: str) -> str:
+    """Deterministic, stable user_id derived from phone -- reruns of this script upsert the same
+    synthetic user rather than minting duplicates each time."""
+    return "synth-" + hashlib.sha256(phone.encode("utf-8")).hexdigest()[:16]
+
+
+def seed_users(messages_df: pd.DataFrame) -> list[dict]:
+    """Derives UserMap rows from blue_db_messages_clustered.csv's user_name/user_phone/region/
+    persona columns -- there is no separate synthetic-user dataset, and (per the real product
+    flow) UserMap is exactly this: one row per app install, keyed by identity, carrying the
+    region/persona that gets denormalized onto every message that install reports.
+
+    One row per unique user_phone (first occurrence wins if the same synthetic phone appears
+    against multiple region/persona combinations, which can happen since
+    enrich_blue_db_metadata.py samples region/persona per-message, not per-user -- acceptable for
+    demo data; a real UserMap is set once at install and doesn't drift per-message).
+
+    fcm_token is a clearly-synthetic placeholder (`demo-fcm-<user_id>`), not a real device token --
+    alerting/daily_job.py::users_in_region reads it from metadata_json, so without this column the
+    daily job would find zero recipients even after a cluster crosses its threshold. Wiring a real
+    push token requires an actual app install to register one; this keeps the demo pipeline
+    self-consistent until that exists.
+    """
+    if "user_phone" not in messages_df.columns:
+        return []
+
+    with_phone = messages_df[messages_df["user_phone"].notna() & (messages_df["user_phone"] != "")]
+    deduped = with_phone.drop_duplicates(subset="user_phone", keep="first")
+
+    rows = []
+    for _, row in deduped.iterrows():
+        user_id = _user_id_for_phone(row["user_phone"])
+        rows.append(
+            {
+                "user_id": user_id,
+                "display_name": row.get("user_name") or None,
+                "phone_number": row["user_phone"],
+                "region": row.get("region") or None,
+                "persona": row.get("persona") or None,
+                "lat": None,
+                "lon": None,
+                "is_vulnerable_group": row.get("persona") in ("senior_citizen", "homemaker"),
+                "metadata_json": {"fcm_token": f"demo-fcm-{user_id}", "source": "synthetic_demo_seed"},
+            }
+        )
+    return rows
 
 
 def seed():
@@ -81,19 +130,30 @@ def seed():
             "persona": row.get("persona"),
             "message_type": row.get("message_type"),
             "sender": row.get("sender"),
+            "user_name": row.get("user_name") or None,
+            "user_phone": row.get("user_phone") or None,
             "cluster_id": row.get("cluster_id") or None,
             "timestamp": pd.to_datetime(row["timestamp"]),
         }
         for _, row in messages_df.iterrows()
     ]
 
+    user_rows = seed_users(messages_df)
+
     with Session() as session:
         print(f"Upserting {len(cluster_rows)} clusters...", flush=True)
         _bulk_upsert(session, Cluster, cluster_rows, "cluster_id")
         print(f"Upserting {len(message_rows)} messages...", flush=True)
         _bulk_upsert(session, Message, message_rows, "message_id")
+        if user_rows:
+            print(f"Upserting {len(user_rows)} synthetic users...", flush=True)
+            _bulk_upsert(session, UserMap, user_rows, "user_id")
 
-    print(f"Seeded {len(clusters_df)} clusters and {len(messages_df)} messages into Cloud SQL.", flush=True)
+    print(
+        f"Seeded {len(clusters_df)} clusters, {len(messages_df)} messages, "
+        f"and {len(user_rows)} synthetic users into Cloud SQL.",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

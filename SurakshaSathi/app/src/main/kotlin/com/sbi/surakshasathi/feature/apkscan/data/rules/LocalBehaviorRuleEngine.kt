@@ -14,7 +14,7 @@ import javax.inject.Singleton
  * IMPORTANT: these rule IDs deliberately do NOT reuse the reference
  * architecture's Windows rule numbers (4001–4011, boot-sector rootkits,
  * `.lnk` exploits, W32/Viking, W32/Beagle) — those target Windows threats and
- * do not map to Android. SBI-R01…R07 below are the Android fake-banking-app
+ * do not map to Android. BANK-R01…R07 below are the Android fake-banking-app
  * equivalent, evaluated fully offline against [PackageSignals].
  */
 data class LocalBehaviorRule(
@@ -38,14 +38,14 @@ class LocalBehaviorRuleEngine
             val RULES: List<LocalBehaviorRule> =
                 listOf(
                     LocalBehaviorRule(
-                        id = "SBI-R01",
+                        id = "BANK-R01",
                         description = "Credential-overlay stack: draw-over-other-apps + accessibility service — classic fake-login overlay + input-capture combo.",
                         weight = 0.45f,
                     ) { s ->
                         Manifest.permission.SYSTEM_ALERT_WINDOW in s.requestedPermissions && s.hasAccessibilityService
                     },
                     LocalBehaviorRule(
-                        id = "SBI-R02",
+                        id = "BANK-R02",
                         description = "OTP interception: SMS read/receive + notification access, without being a messaging app.",
                         weight = 0.40f,
                     ) { s ->
@@ -56,18 +56,18 @@ class LocalBehaviorRuleEngine
                         hasSms && hasNotificationPost && !s.packageName.contains("messag", ignoreCase = true)
                     },
                     LocalBehaviorRule(
-                        id = "SBI-R03",
+                        id = "BANK-R03",
                         description = "Accessibility abuse while impersonating a bank — auto-read screens, auto-click, exfiltrate.",
                         weight = 0.35f,
                     ) { s ->
                         s.hasAccessibilityService &&
                             (
-                                s.appLabel.contains("sbi", true) || s.appLabel.contains("yono", true) ||
-                                    s.packageName.contains("sbi", true) || s.packageName.contains("yono", true)
+                                s.appLabel.contains("bank", true) || s.appLabel.contains("yono", true) ||
+                                    s.packageName.contains("bank", true) || s.packageName.contains("yono", true)
                             )
                     },
                     LocalBehaviorRule(
-                        id = "SBI-R04",
+                        id = "BANK-R04",
                         description = "Dynamic code loading (DexClassLoader/PathClassLoader) from an untrusted-storage-capable app.",
                         weight = 0.30f,
                     ) { s ->
@@ -77,7 +77,7 @@ class LocalBehaviorRuleEngine
                         s.referencesDynamicCodeLoading && hasExternalStorage
                     },
                     LocalBehaviorRule(
-                        id = "SBI-R05",
+                        id = "BANK-R05",
                         description = "Sideload / unknown installer + REQUEST_INSTALL_PACKAGES — the core sideloading vector for fake banking apps.",
                         weight = 0.30f,
                     ) { s ->
@@ -87,18 +87,18 @@ class LocalBehaviorRuleEngine
                         "android.permission.REQUEST_INSTALL_PACKAGES" in s.requestedPermissions && notPlayOrTrusted
                     },
                     LocalBehaviorRule(
-                        id = "SBI-R06",
+                        id = "BANK-R06",
                         description = "Device-admin or all-files access beyond what a banking app needs.",
                         weight = 0.25f,
                     ) { s ->
                         s.hasDeviceAdminReceiver || "android.permission.MANAGE_EXTERNAL_STORAGE" in s.requestedPermissions
                     },
                     LocalBehaviorRule(
-                        id = "SBI-R07",
-                        description = "Signature mismatch: re-signed/rebranded package reusing SBI branding (ties into Tier 1.3).",
+                        id = "BANK-R07",
+                        description = "Signature mismatch: re-signed/rebranded package reusing Bank branding (ties into Tier 1.3).",
                         weight = 0.50f,
                     ) { s ->
-                        (s.appLabel.contains("sbi", true) || s.appLabel.contains("yono", true)) &&
+                        (s.appLabel.contains("bank", true) || s.appLabel.contains("yono", true)) &&
                             s.signingCertSha256.isEmpty()
                     },
                 )

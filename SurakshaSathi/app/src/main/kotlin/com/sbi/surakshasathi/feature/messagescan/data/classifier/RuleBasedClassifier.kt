@@ -1,5 +1,6 @@
 package com.sbi.surakshasathi.feature.messagescan.data.classifier
 
+import com.sbi.surakshasathi.feature.apkscan.data.branding.BankAllowList
 import com.sbi.surakshasathi.feature.messagescan.domain.model.MessageSource
 import com.sbi.surakshasathi.feature.messagescan.domain.usecase.ExtractUrlsUseCase
 import javax.inject.Inject
@@ -96,10 +97,15 @@ class RuleBasedClassifier
                             (text.contains("click") || text.contains("claim") || urls.isNotEmpty())
                     },
                     // ── Sender signals ────────────────────────────────────────────────
-                    MessageRule("FAKE_SENDER_KNOWN", weight = 0.50f) { _, _, sender, _, _ ->
+                    // Exact-match fast path for this app's own bank's known fake senders, plus a
+                    // generic lookalike check (see TraiDltValidator.looksLikeBankSenderLookalike)
+                    // that covers every bank in BankAllowList.
+                    MessageRule("FAKE_SENDER_KNOWN", weight = 0.50f) { _, _, sender, validator, _ ->
                         sender != null &&
-                            TraiDltValidatorImpl.KNOWN_FAKE_SENDERS
-                                .any { fake -> sender.uppercase().contains(fake) }
+                            (
+                                TraiDltValidatorImpl.KNOWN_FAKE_SENDERS.any { fake -> sender.uppercase().contains(fake) } ||
+                                    validator.looksLikeBankSenderLookalike(sender)
+                            )
                     },
                     // SMS-only: TRAI DLT registration doesn't apply to WhatsApp/Telegram
                     // display names — without this gate, any saved WhatsApp contact
@@ -108,11 +114,13 @@ class RuleBasedClassifier
                         source == MessageSource.SMS &&
                             sender != null && sender.length > 4 &&
                             !sender.all { it.isDigit() } && // DLT alphanumeric senders
-                            !validator.isRegisteredSbiSender(sender)
+                            !validator.isRegisteredBankSender(sender)
                     },
                     // ── Impersonation signals ─────────────────────────────────────────
-                    MessageRule("IMPERSONATES_SBI", weight = 0.30f) { text, _, _, _, _ ->
-                        (text.contains("sbi") || text.contains("yono") || text.contains("state bank"))
+                    // Not limited to one bank — checks against every known bank's brand tokens
+                    // (see BankAllowList), since this app protects customers of any bank.
+                    MessageRule("IMPERSONATES_KNOWN_BANK", weight = 0.30f) { text, _, _, _, _ ->
+                        BankAllowList.ALL_BRAND_TOKENS.any { text.contains(it) }
                     },
                     MessageRule("INSTALL_PROMPT", weight = 0.30f) { text, urls, _, _, _ ->
                         (text.contains("install") || text.contains("download") || text.contains("update")) &&

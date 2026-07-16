@@ -30,11 +30,13 @@ class Message(Base):
     content_type = Column(String, nullable=False)
     region = Column(String, nullable=True)
     # persona/message_type denormalized from the reporting user's UserMap.persona at ingestion
-    # time -- these are the primary clustering signal (see clustering/run_clustering.py), not
-    # just descriptive metadata.
+    # time. message_type + region + persona together are the clustering signal (see
+    # clustering/run_clustering.py::build_feature_vector).
     persona = Column(String, nullable=True)
     message_type = Column(String, nullable=True)
-    sender = Column(String, nullable=True)
+    sender = Column(String, nullable=True)  # the fraud message's spoofed originator, NOT the recipient
+    user_name = Column(String, nullable=True)   # recipient identity -- see common/schemas.py:MessageRecord
+    user_phone = Column(String, nullable=True)  # recipient identity -- see common/schemas.py:MessageRecord
     cluster_id = Column(String, ForeignKey("clusters.cluster_id"), nullable=True)
     timestamp = Column(DateTime(timezone=True), nullable=False)
 
@@ -62,6 +64,8 @@ class UserMap(Base):
     fields are what's denormalized onto Message.region/Message.persona at ingestion time."""
     __tablename__ = "user_map"
     user_id = Column(String, primary_key=True)
+    display_name = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True, index=True)  # indexed: dedup key for db/seed/seed_blue_db.py::seed_users
     region = Column(String, nullable=True)
     persona = Column(String, nullable=True)  # see clustering/persona.py for the fixed category set
     lat = Column(Float, nullable=True)
@@ -128,7 +132,14 @@ def get_engine():
     #   def getconn():
     #       return connector.connect(INSTANCE_CONNECTION_NAME, "psycopg", ...)
     #   return create_engine("postgresql+psycopg://", creator=getconn)
-    return create_engine(dsn)
+    #
+    # connect_timeout is deliberately short (default psycopg/OS TCP timeout can be 60s+, which
+    # blew through the Android client's 30s read timeout on message_scan.py's request path --
+    # every request silently fell back to canned offline text instead of the real LLM-generated
+    # warning, because retrieve_guideline_docs() never got a chance to fail fast and let the
+    # request continue without grounding docs). A real connectivity problem (e.g. Cloud SQL
+    # authorized-networks not including this host) should surface in ~3s, not hang the request.
+    return create_engine(dsn, connect_args={"connect_timeout": 3})
 
 
 def get_session_factory():

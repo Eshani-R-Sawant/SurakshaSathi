@@ -50,15 +50,38 @@ class MessageNotificationListenerService : NotificationListenerService() {
             "org.telegram.messenger" to MessageSource.TELEGRAM,
             "org.telegram.messenger.web" to MessageSource.TELEGRAM,
             "org.telegram.plus" to MessageSource.TELEGRAM,
-            "com.google.android.apps.messaging" to MessageSource.SMS,
-            "com.samsung.android.messaging" to MessageSource.SMS,
-            "com.android.mms" to MessageSource.SMS,
-            "com.oneplus.mms" to MessageSource.SMS,
+        )
+
+    /**
+     * Known SMS app packages across major OEMs and popular third-party apps. This list can never
+     * be exhaustive — Android has dozens of OEM-skinned messaging apps with undocumented package
+     * names — so it exists only to short-circuit [isLikelySmsNotification]'s category check for
+     * the common cases. [isLikelySmsNotification] is what actually makes SMS detection robust
+     * across manufacturers this list doesn't (yet) name.
+     */
+    private val knownSmsPackages =
+        setOf(
+            "com.google.android.apps.messaging", // Google Messages
+            "com.samsung.android.messaging", // Samsung Messages
+            "com.android.mms", // AOSP / stock, and several OEMs
+            "com.oneplus.mms", // OnePlus
+            "com.coloros.mms", // Oppo / Realme (ColorOS)
+            "com.vivo.smsmms", // Vivo
+            "com.huawei.mms", // Huawei / Honor
+            "com.miui.mms", // Xiaomi (MIUI/HyperOS builds using this package)
+            "com.sonyericsson.conversations", // Sony
+            "com.motorola.messaging", // Motorola
+            "com.textra", // Textra (popular third-party)
+            "com.moez.QKSMS", // QKSMS
+            "com.p1.chompsms", // Chomp SMS
         )
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val notification = sbn ?: return
-        val source = allowedPackages[notification.packageName] ?: return
+        val knownSource = allowedPackages[notification.packageName]
+        val source =
+            knownSource
+                ?: if (isLikelySmsNotification(notification)) MessageSource.SMS else return
 
         // Only process messaging notifications (not group summaries, etc.)
         if (notification.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY != 0) return
@@ -90,6 +113,25 @@ class MessageNotificationListenerService : NotificationListenerService() {
                 notificationOnlySmsStrategy.onSmsNotificationReceived(body, sender)
             }
         }
+    }
+
+    /**
+     * True for [knownSmsPackages], or — the actual cross-OEM fallback — any notification tagged
+     * with Android's standard `CATEGORY_MESSAGE`. Well-behaved SMS/messaging apps set this so the
+     * OS can prioritize them correctly (e.g. bypass Do Not Disturb); it's the only reliable signal
+     * for the dozens of OEM-skinned SMS apps this class can't enumerate by package name, short of
+     * `QUERY_ALL_PACKAGES` (deliberately not used, §1.7). WhatsApp/Telegram are matched earlier via
+     * [allowedPackages] and never reach this fallback, so this can't relabel them as SMS.
+     *
+     * Trade-off: a non-SMS app that also sets `CATEGORY_MESSAGE` (e.g. Signal) would be picked up
+     * and labeled SMS here. The only user-visible effect is [com.sbi.surakshasathi.feature.messagescan.data.classifier.RuleBasedClassifier]'s
+     * SMS-only TRAI DLT sender-registration rule being evaluated against a non-SMS sender — a
+     * minor false-signal risk, judged far better than silently missing real SMS on unlisted OEM
+     * messaging apps.
+     */
+    private fun isLikelySmsNotification(sbn: StatusBarNotification): Boolean {
+        if (sbn.packageName in knownSmsPackages) return true
+        return sbn.notification.category == android.app.Notification.CATEGORY_MESSAGE
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {

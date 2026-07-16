@@ -12,7 +12,7 @@ import retrofit2.http.Query
 /**
  * Retrofit contract for Flow 2's cloud tiers (§5).
  *
- * - Tier 2: `POST /threat/apk` — SBI/SurakshaSathi collective-intelligence
+ * - Tier 2: `POST /threat/apk` — SurakshaSathi's collective-intelligence
  *   verdict by hash, proxying a VirusTotal-style multi-engine lookup for
  *   freshly circulating variants. Proxied through our own backend (not
  *   called directly from the client) so no third-party API key ever ships in
@@ -39,8 +39,8 @@ interface ThreatIntelApi {
         @Query("u") url: String,
     ): UrlReputationResponseDto
 
-    @GET("threat/sbi-allowlist")
-    suspend fun getSbiAllowList(): List<SbiAllowListEntryDto>
+    @GET("threat/bank-allowlist")
+    suspend fun getBankAllowList(): List<BankAllowListEntryDto>
 }
 
 @Serializable
@@ -51,7 +51,8 @@ data class ApkVerdictRequestDto(
 )
 
 @Serializable
-data class SbiAllowListEntryDto(
+data class BankAllowListEntryDto(
+    val bankKey: String,
     val packageName: String,
     val signingCertSha256: List<String>,
 )

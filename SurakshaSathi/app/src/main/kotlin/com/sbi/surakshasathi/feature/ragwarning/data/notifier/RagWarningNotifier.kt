@@ -19,7 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Posts the Flow 1b system notification — "⚠️ This may be a fake SBI/YONO
+ * Posts the Flow 1b system notification — "⚠️ This may be a fake Bank/YONO
  * message" with an expandable guideline and a "Report" action that deep
  * links into Flow 4b (NCRP reporting) (§4b).
  *
@@ -51,7 +51,7 @@ class RagWarningNotifier
                 PendingIntent.getActivity(
                     context,
                     requestCode(message.id, SUFFIX_REPORT),
-                    Intent(Intent.ACTION_VIEW, Uri.parse("surakshasathi://report/${message.id}")),
+                    Intent(Intent.ACTION_VIEW, Uri.parse("surakshasathi://report/message/${message.id}")),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
 

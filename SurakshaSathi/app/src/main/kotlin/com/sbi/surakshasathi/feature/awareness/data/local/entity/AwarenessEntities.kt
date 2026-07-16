@@ -45,3 +45,29 @@ data class SafetyNudgeEntity(
     val seen: Boolean,
     @ColumnInfo(name = "created_at_millis") val createdAtMillis: Long,
 )
+
+/** One completed mini-game round (§7c Phase 7 — Learn tab games). Recap stored as JSON, same approach as [LessonEntity.quizJson]. */
+@Entity(tableName = "game_outcomes")
+data class GameOutcomeEntity(
+    @PrimaryKey val id: String,
+    @ColumnInfo(name = "game_id") val gameId: String,
+    val score: Int,
+    @ColumnInfo(name = "total_possible") val totalPossible: Int,
+    @ColumnInfo(name = "correct_count") val correctCount: Int,
+    @ColumnInfo(name = "total_count") val totalCount: Int,
+    @ColumnInfo(name = "recap_json") val recapJson: String,
+    @ColumnInfo(name = "completed_at_millis") val completedAtMillis: Long,
+)
+
+/** Non-gamified "read or listen" cyber-safety article (§7c Phase 7). */
+@Entity(tableName = "advisories")
+data class AdvisoryEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val body: String,
+    val category: String,
+    @ColumnInfo(name = "persona_tags_csv") val personaTagsCsv: String,
+    val language: String,
+    @ColumnInfo(name = "source_label") val sourceLabel: String,
+    @ColumnInfo(name = "source_url") val sourceUrl: String?,
+)

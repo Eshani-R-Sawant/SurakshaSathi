@@ -5,7 +5,7 @@
 
 # ── Backend ───────────────────────────────────────────────────────────────────
 # Base URL for all SurakshaSathi backend API calls (include trailing slash)
-BACKEND_BASE_URL=https://api.surakshasathi.sbi.co.in/
+BACKEND_BASE_URL=https://api.surakshasathi.bank.example/
 
 # ── Google Maps (Flow 4a: Fraud Heatmap) ─────────────────────────────────────
 # Obtain from: https://console.cloud.google.com/
@@ -15,6 +15,13 @@ MAPS_API_KEY=
 # ── VirusTotal (Flow 2: APK cloud scan Tier 2) ───────────────────────────────
 # Obtain from: https://www.virustotal.com/gui/my-apikey
 VIRUSTOTAL_API_KEY=
+
+# ── Azure Translator (multi-language Learn content) ──────────────────────────
+# Obtain from: https://portal.azure.com/ (Cognitive Services -> Translator)
+# If empty, translated text transparently falls back to the original English source
+AZURE_TRANSLATOR_KEY=
+AZURE_TRANSLATOR_REGION=
+AZURE_TRANSLATOR_ENDPOINT=https://api.cognitive.microsofttranslator.com/
 
 # ── SMS Strategy (Flow 1 ingestion) ──────────────────────────────────────────
 # NOTIFICATION_ONLY (default, Play-publishable) or DEFAULT_HANDLER (restricted)

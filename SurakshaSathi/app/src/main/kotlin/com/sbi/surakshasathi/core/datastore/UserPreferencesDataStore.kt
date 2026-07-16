@@ -48,6 +48,12 @@ class UserPreferencesDataStore
             val CONSENT_TIMESTAMP_MS = longPreferencesKey("consent_timestamp_ms")
             val USE_OFFLINE_FALLBACK = booleanPreferencesKey("use_offline_fallback")
             val FRAUD_HEATMAP_LAST_SYNC = longPreferencesKey("fraud_heatmap_last_sync")
+            val USER_REGION = stringPreferencesKey("user_region")
+            val USER_PERSONA = stringPreferencesKey("user_persona")
+            val SEEN_REGIONAL_ALERT_IDS = stringSetPreferencesKey("seen_regional_alert_ids")
+            val REPORTER_NAME = stringPreferencesKey("reporter_name")
+            val REPORTER_PHONE = stringPreferencesKey("reporter_phone")
+            val REPORTER_EMAIL = stringPreferencesKey("reporter_email")
         }
 
         // ── User Preferences flow ─────────────────────────────────────────────────
@@ -74,6 +80,11 @@ class UserPreferencesDataStore
                         consentTimestampMs = prefs[Keys.CONSENT_TIMESTAMP_MS] ?: 0L,
                         useOfflineFallback = prefs[Keys.USE_OFFLINE_FALLBACK] ?: false,
                         fraudHeatmapLastSyncMs = prefs[Keys.FRAUD_HEATMAP_LAST_SYNC] ?: 0L,
+                        userRegion = prefs[Keys.USER_REGION],
+                        userPersona = prefs[Keys.USER_PERSONA],
+                        reporterName = prefs[Keys.REPORTER_NAME],
+                        reporterPhone = prefs[Keys.REPORTER_PHONE],
+                        reporterEmail = prefs[Keys.REPORTER_EMAIL],
                     )
                 }
 
@@ -101,6 +112,51 @@ class UserPreferencesDataStore
         }
 
         suspend fun setUseOfflineFallback(use: Boolean) = dataStore.edit { it[Keys.USE_OFFLINE_FALLBACK] = use }
+
+        /** Set once from resolved device location (or manual override) — drives regional alert/heatmap targeting. */
+        suspend fun setUserRegion(region: String) = dataStore.edit { it[Keys.USER_REGION] = region }
+
+        /** Set once via the persona picker — see [com.sbi.surakshasathi.core.common.Personas]. */
+        suspend fun setUserPersona(persona: String) = dataStore.edit { it[Keys.USER_PERSONA] = persona }
+
+        /**
+         * Remembers the complainant details entered on a manual NCRP report so future reports
+         * (manual or auto-populated) don't need them re-typed. Set from
+         * [com.sbi.surakshasathi.feature.ncrpreport.presentation.NcrpReportViewModel] the first
+         * time a user fills in the manual-report form.
+         */
+        suspend fun setReporterDetails(
+            name: String?,
+            phone: String?,
+            email: String?,
+        ) = dataStore.edit { prefs ->
+            if (!name.isNullOrBlank()) prefs[Keys.REPORTER_NAME] = name
+            if (!phone.isNullOrBlank()) prefs[Keys.REPORTER_PHONE] = phone
+            if (!email.isNullOrBlank()) prefs[Keys.REPORTER_EMAIL] = email
+        }
+
+        /**
+         * Diffs [currentAlertIds] against the previously-seen set, returns the ones not seen
+         * before, and records all of [currentAlertIds] as seen — used by
+         * [com.sbi.surakshasathi.feature.frauddashboard.data.worker.RegionalAlertSyncWorker] to
+         * only notify once per alert. Capped at [MAX_SEEN_ALERT_IDS] to keep the DataStore entry
+         * bounded (§8B) — a simple size cap rather than true LRU, which is fine for a dedup set.
+         */
+        suspend fun diffAndMarkAlertsSeen(currentAlertIds: List<String>): List<String> {
+            var newlySeen: List<String> = emptyList()
+            dataStore.edit { prefs ->
+                val previouslySeen = prefs[Keys.SEEN_REGIONAL_ALERT_IDS] ?: emptySet()
+                newlySeen = currentAlertIds.filterNot { it in previouslySeen }
+                val updated = (previouslySeen + currentAlertIds)
+                prefs[Keys.SEEN_REGIONAL_ALERT_IDS] =
+                    if (updated.size > MAX_SEEN_ALERT_IDS) updated.toList().takeLast(MAX_SEEN_ALERT_IDS).toSet() else updated
+            }
+            return newlySeen
+        }
+
+        companion object {
+            private const val MAX_SEEN_ALERT_IDS = 300
+        }
     }
 
 /**
@@ -122,4 +178,12 @@ data class UserPreferences(
     val consentTimestampMs: Long,
     val useOfflineFallback: Boolean,
     val fraudHeatmapLastSyncMs: Long,
+    /** Nearest named region to the user's resolved/overridden location — null until set (see IndiaRegions). */
+    val userRegion: String?,
+    /** User-declared demographic category — null until the persona picker has been completed. */
+    val userPersona: String?,
+    /** Remembered complainant details for NCRP reports — null until first entered manually. */
+    val reporterName: String?,
+    val reporterPhone: String?,
+    val reporterEmail: String?,
 )

@@ -8,9 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,7 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.sbi.surakshasathi.app.navigation.Screen
-import com.sbi.surakshasathi.core.designsystem.theme.SbiGold80
+import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 import com.sbi.surakshasathi.core.designsystem.theme.safeColor
 import com.sbi.surakshasathi.feature.awareness.domain.model.Lesson
 
@@ -45,6 +47,13 @@ fun AwarenessScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
+                LanguagePickerRow(
+                    selectedLanguage = uiState.selectedLanguage,
+                    onLanguageSelected = viewModel::onLanguageSelected,
+                )
+            }
+
+            item {
                 Card(
                     onClick = { navController.navigate(Screen.OfficialLinkScanner.route) },
                     modifier = Modifier.fillMaxWidth(),
@@ -55,8 +64,43 @@ fun AwarenessScreen(
                         Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(36.dp))
                         Spacer(Modifier.width(16.dp))
                         Column {
-                            Text("Is this the real SBI app?", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("Is this the real Bank app?", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                             Text("Scan a QR code or paste a link to verify", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    onClick = { navController.navigate(Screen.GameHub.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                ) {
+                    Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.SportsEsports, contentDescription = null, modifier = Modifier.size(36.dp))
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text("Play & Learn", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("5 quick games that teach you to spot scams", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    onClick = { navController.navigate(Screen.AdvisoryList.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.MenuBook, contentDescription = null, modifier = Modifier.size(36.dp))
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text("Read & Listen: Advisories", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("Cyber-safety guidance you can read or listen to", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -66,7 +110,7 @@ fun AwarenessScreen(
                 item {
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = SbiGold80, modifier = Modifier.size(28.dp))
+                            Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = BankGold80, modifier = Modifier.size(28.dp))
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(nudge.title, fontWeight = FontWeight.SemiBold)
@@ -83,7 +127,7 @@ fun AwarenessScreen(
                         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = SbiGold80)
+                        Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = BankGold80)
                         Text(
                             "${uiState.badges.size} badge${if (uiState.badges.size == 1) "" else "s"} earned",
                             fontWeight = FontWeight.SemiBold,

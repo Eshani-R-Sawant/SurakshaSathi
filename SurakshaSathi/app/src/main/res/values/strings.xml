@@ -2,7 +2,7 @@
     <!-- App name -->
     <string name="app_name">SurakshaSathi</string>
     <string name="app_name_hindi">सुरक्षा साथी</string>
-    <string name="app_tagline">SBI Anti-Phishing Shield</string>
+    <string name="app_tagline">Bank Anti-Phishing Shield</string>
 
     <!-- Notification channels -->
     <string name="notification_channel_phishing_id">phishing_alerts</string>
@@ -21,11 +21,11 @@
     <string name="notification_listener_label">SurakshaSathi Message Scanner</string>
 
     <!-- RAG warning notification (Flow 1b) -->
-    <string name="rag_warning_notification_title">⚠️ This may be a fake SBI/YONO message</string>
+    <string name="rag_warning_notification_title">⚠️ This may be a fake Bank/YONO message</string>
     <string name="rag_warning_notification_report_action">Report</string>
 
     <!-- APK alert notification (Flow 2) -->
-    <string name="apk_alert_notification_title_impersonation">🚨 Fake SBI/YONO app detected</string>
+    <string name="apk_alert_notification_title_impersonation">🚨 Fake Bank/YONO app detected</string>
     <string name="apk_alert_notification_title_malware">🚨 Malicious app detected</string>
     <string name="apk_alert_notification_view_action">View</string>
 
@@ -35,7 +35,7 @@
     <string name="permission_notification_listener_title">Enable Notification Access</string>
     <string name="permission_notification_listener_rationale">To scan WhatsApp and Telegram messages for phishing, SurakshaSathi needs Notification Access. This is the only way to read message content — no data is stored without your consent.</string>
     <string name="permission_camera_title">Enable Camera</string>
-    <string name="permission_camera_rationale">Camera is used for liveness verification during high-risk transactions and scanning QR codes to verify official SBI links. No images are stored or transmitted.</string>
+    <string name="permission_camera_rationale">Camera is used for liveness verification during high-risk transactions and scanning QR codes to verify official Bank links. No images are stored or transmitted.</string>
     <string name="permission_location_title">Enable Location (Optional)</string>
     <string name="permission_location_rationale">Anonymous coarse location helps display the fraud heatmap and show regional threats near you. This is optional.</string>
     <string name="permission_sms_title">Enable SMS Access</string>

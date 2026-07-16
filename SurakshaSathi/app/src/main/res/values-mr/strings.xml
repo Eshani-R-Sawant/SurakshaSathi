@@ -1,8 +1,8 @@
 <resources>
     <!-- Marathi (मराठी) translations -->
     <string name="app_name">सुरक्षा साथी</string>
-    <string name="app_tagline">SBI अँटी-फिशिंग शील्ड</string>
-    <string name="rag_warning_notification_title">⚠️ हा बनावट SBI/YONO मेसेज असू शकतो</string>
+    <string name="app_tagline">बँक अँटी-फिशिंग शील्ड</string>
+    <string name="rag_warning_notification_title">⚠️ हा बनावट बँक/YONO मेसेज असू शकतो</string>
     <string name="rag_warning_notification_report_action">तक्रार करा</string>
     <string name="label_protected">संरक्षित ✓</string>
     <string name="label_safe">सुरक्षित ✓</string>

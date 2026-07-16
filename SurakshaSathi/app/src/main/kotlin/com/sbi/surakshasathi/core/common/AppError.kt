@@ -78,10 +78,10 @@ sealed class AppError : Exception() {
         override val message: String = "Device integrity check failed."
     }
 
-    /** APK impersonation detected — package looks like SBI/YONO but isn't. */
+    /** APK impersonation detected — package looks like Bank/YONO but isn't. */
     data class ImpersonationDetectedError(val packageName: String) : AppError() {
         override val message: String =
-            "⚠️ Impersonation detected: $packageName appears to be a fake SBI app."
+            "⚠️ Impersonation detected: $packageName appears to be a fake Bank app."
     }
 
     // ── Generic / Unknown ─────────────────────────────────────────────────────

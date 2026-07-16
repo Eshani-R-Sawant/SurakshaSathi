@@ -11,37 +11,56 @@ class TraiDltValidatorTest {
 
     @Test
     fun `test valid registered SBI prefixes`() {
-        assertTrue(validator.isRegisteredSbiSender("SBIOTP"))
-        assertTrue(validator.isRegisteredSbiSender("SBIYONO"))
-        assertTrue(validator.isRegisteredSbiSender("SBINBT"))
-        assertTrue(validator.isRegisteredSbiSender("VM-SBI"))
-        assertTrue(validator.isRegisteredSbiSender("BW-SBI"))
+        assertTrue(validator.isRegisteredBankSender("SBIOTP"))
+        assertTrue(validator.isRegisteredBankSender("SBIYONO"))
+        assertTrue(validator.isRegisteredBankSender("SBINBT"))
+        assertTrue(validator.isRegisteredBankSender("VM-SBI"))
+        assertTrue(validator.isRegisteredBankSender("BW-SBI"))
     }
 
     @Test
     fun `test exact match registers`() {
-        assertTrue(validator.isRegisteredSbiSender("SBI"))
-        assertTrue(validator.isRegisteredSbiSender("SBI-OTP"))
+        assertTrue(validator.isRegisteredBankSender("SBI"))
+        assertTrue(validator.isRegisteredBankSender("SBI-OTP"))
     }
 
     @Test
     fun `test invalid or fake senders`() {
-        assertFalse(validator.isRegisteredSbiSender("SB1")) // Number 1 instead of I
-        assertFalse(validator.isRegisteredSbiSender("5BI")) // Number 5 instead of S
-        assertFalse(validator.isRegisteredSbiSender("SBIYONO1"))
-        assertFalse(validator.isRegisteredSbiSender("HDFCBK"))
-        assertFalse(validator.isRegisteredSbiSender("AD-ALERT"))
+        assertFalse(validator.isRegisteredBankSender("SB1")) // Number 1 instead of I
+        assertFalse(validator.isRegisteredBankSender("5BI")) // Number 5 instead of S
+        assertFalse(validator.isRegisteredBankSender("SBIYONO1"))
+        assertFalse(validator.isRegisteredBankSender("HDFCBK"))
+        assertFalse(validator.isRegisteredBankSender("AD-ALERT"))
     }
 
     @Test
     fun `regression - prefix matching must not let 'SBI-prefixed' spoofs through`() {
-        // Real bug found and fixed: isRegisteredSbiSender used to do
+        // Real bug found and fixed: isRegisteredBankSender used to do
         // `normalized.startsWith(prefix)` against bare prefixes like "SBI"
         // and "SBIYONO", so ANY sender starting with those strings —
         // including spoofs — validated as "registered". Matching must be
         // exact against the known sender-ID set.
-        assertFalse(validator.isRegisteredSbiSender("SBIFRAUD"))
-        assertFalse(validator.isRegisteredSbiSender("SBIYONOX"))
-        assertFalse(validator.isRegisteredSbiSender("SBI999"))
+        assertFalse(validator.isRegisteredBankSender("SBIFRAUD"))
+        assertFalse(validator.isRegisteredBankSender("SBIYONOX"))
+        assertFalse(validator.isRegisteredBankSender("SBI999"))
+    }
+
+    @Test
+    fun `lookalike detection works across banks, not just SBI`() {
+        assertTrue(validator.looksLikeBankSenderLookalike("SB1")) // vs SBI
+        assertTrue(validator.looksLikeBankSenderLookalike("HDFC1")) // vs HDFC
+        assertTrue(validator.looksLikeBankSenderLookalike("1CICI")) // vs ICICI
+    }
+
+    @Test
+    fun `real registered SBI senders are not flagged as lookalikes`() {
+        assertFalse(validator.looksLikeBankSenderLookalike("SBIOTP"))
+        assertFalse(validator.looksLikeBankSenderLookalike("SBI"))
+    }
+
+    @Test
+    fun `unrelated senders are not flagged as lookalikes`() {
+        assertFalse(validator.looksLikeBankSenderLookalike("AMAZON"))
+        assertFalse(validator.looksLikeBankSenderLookalike("VK-ELECBD"))
     }
 }

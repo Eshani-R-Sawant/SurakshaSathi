@@ -30,67 +30,47 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** The device's own flagged-message list, without a Scaffold/top bar — embedded inside
+ * [com.sbi.surakshasathi.app.presentation.AlertsHostScreen]'s "My Alerts" tab. */
 @Composable
-fun MessageScanScreen(
+fun MessageScanContent(
     navController: NavController,
     viewModel: MessageScanViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showAllMessages by viewModel.showAllMessages.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Security Alerts", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = { viewModel.toggleFilter() }) {
-                        Icon(
-                            imageVector = if (showAllMessages) Icons.Filled.FilterListOff else Icons.Filled.FilterList,
-                            contentDescription = if (showAllMessages) "Show Flagged Only" else "Show All Messages",
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+    ) {
+        when (val state = uiState) {
+            is MessageScanUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
+            is MessageScanUiState.Empty -> {
+                EmptyAlertsState(showAllMessages)
+            }
+            is MessageScanUiState.Success -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(state.messages, key = { it.id }) { message ->
+                        MessageAlertCard(
+                            message = message,
+                            onClick = {
+                                navController.navigate(Screen.MessageDetail.createRoute(message.id))
+                            },
+                            onReportClick = {
+                                navController.navigate(Screen.NcrpReport.createRouteForMessage(message.id))
+                            },
                         )
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
-            )
-        },
-    ) { paddingValues ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(paddingValues),
-        ) {
-            when (val state = uiState) {
-                is MessageScanUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-                is MessageScanUiState.Empty -> {
-                    EmptyAlertsState(showAllMessages)
-                }
-                is MessageScanUiState.Success -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(state.messages, key = { it.id }) { message ->
-                            MessageAlertCard(
-                                message = message,
-                                onClick = {
-                                    navController.navigate(Screen.MessageDetail.createRoute(message.id))
-                                },
-                                onReportClick = {
-                                    navController.navigate(Screen.NcrpReport.createRoute(message.id.toString()))
-                                },
-                            )
-                        }
                     }
                 }
             }

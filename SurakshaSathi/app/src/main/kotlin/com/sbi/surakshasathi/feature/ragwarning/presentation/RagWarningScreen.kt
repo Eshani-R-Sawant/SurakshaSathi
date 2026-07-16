@@ -27,7 +27,7 @@ import com.sbi.surakshasathi.core.designsystem.theme.warningColor
 
 /**
  * In-app RAG warning card (§4b) — shown when a flagged message is tapped
- * from the Alerts list, or from the "⚠️ This may be a fake SBI/YONO message"
+ * from the Alerts list, or from the "⚠️ This may be a fake Bank/YONO message"
  * notification's content action.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,6 +131,76 @@ fun RagWarningScreen(
                             }
                         }
 
+                        if (state.verdict.isNotBlank() || state.suspiciousSignals.isNotEmpty()) {
+                            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Filled.SmartToy,
+                                            contentDescription = null,
+                                            tint = accentColor,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            "AI Threat Analysis",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        if (state.verdict.isNotBlank()) {
+                                            Surface(
+                                                shape = RoundedCornerShape(50),
+                                                color = accentColor.copy(alpha = 0.18f),
+                                            ) {
+                                                Text(
+                                                    state.verdict,
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = accentColor,
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                                )
+                                            }
+                                        }
+                                        if (state.threatType.isNotBlank()) {
+                                            Text(
+                                                state.threatType,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                            )
+                                        }
+                                        Spacer(Modifier.weight(1f))
+                                        if (state.confidence > 0f) {
+                                            Text(
+                                                "${(state.confidence * 100).toInt()}% confidence",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    if (state.suspiciousSignals.isNotEmpty()) {
+                                        HorizontalDivider()
+                                        Text(
+                                            "Suspicious signals detected",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        state.suspiciousSignals.forEach { signal ->
+                                            Row(verticalAlignment = Alignment.Top) {
+                                                Text("•  ", style = MaterialTheme.typography.bodyMedium, color = accentColor)
+                                                Text(signal, style = MaterialTheme.typography.bodyMedium)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -163,7 +233,7 @@ fun RagWarningScreen(
 
                         Button(
                             onClick = {
-                                navController.navigate(Screen.NcrpReport.createRoute(state.message.id.toString()))
+                                navController.navigate(Screen.NcrpReport.createRouteForMessage(state.message.id))
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                             modifier = Modifier.fillMaxWidth().height(52.dp),

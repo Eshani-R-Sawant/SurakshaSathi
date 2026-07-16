@@ -13,14 +13,14 @@ import androidx.core.view.WindowCompat
 // ── Dark color scheme (default — professional, secure look) ──────────────────
 private val DarkColorScheme =
     darkColorScheme(
-        primary = SbiBlue80,
-        onPrimary = SbiBlue20,
-        primaryContainer = SbiBlue30,
-        onPrimaryContainer = SbiBlue90,
-        secondary = SbiGold80,
-        onSecondary = SbiGold20,
-        secondaryContainer = SbiGold30,
-        onSecondaryContainer = SbiGold90,
+        primary = BankBlue80,
+        onPrimary = BankBlue20,
+        primaryContainer = BankBlue30,
+        onPrimaryContainer = BankBlue90,
+        secondary = BankGold80,
+        onSecondary = BankGold20,
+        secondaryContainer = BankGold30,
+        onSecondaryContainer = BankGold90,
         error = ErrorRed80,
         onError = ErrorRed10,
         errorContainer = ErrorRed40,
@@ -34,21 +34,21 @@ private val DarkColorScheme =
         outline = NeutralVar30,
         inverseSurface = Neutral90,
         inverseOnSurface = Neutral20,
-        inversePrimary = SbiBlue40,
-        surfaceTint = SbiBlue80,
+        inversePrimary = BankBlue40,
+        surfaceTint = BankBlue80,
     )
 
 // ── Light color scheme ────────────────────────────────────────────────────────
 private val LightColorScheme =
     lightColorScheme(
-        primary = SbiBlue40,
+        primary = BankBlue40,
         onPrimary = Color.White,
-        primaryContainer = SbiBlue90,
-        onPrimaryContainer = SbiBlue10,
-        secondary = SbiGold40,
+        primaryContainer = BankBlue90,
+        onPrimaryContainer = BankBlue10,
+        secondary = BankGold40,
         onSecondary = Color.White,
-        secondaryContainer = SbiGold95,
-        onSecondaryContainer = SbiGold10,
+        secondaryContainer = BankGold95,
+        onSecondaryContainer = BankGold10,
         error = ErrorRed40,
         onError = Color.White,
         errorContainer = ErrorRed90,
@@ -62,8 +62,8 @@ private val LightColorScheme =
         outline = NeutralVar30,
         inverseSurface = Neutral20,
         inverseOnSurface = Neutral90,
-        inversePrimary = SbiBlue80,
-        surfaceTint = SbiBlue40,
+        inversePrimary = BankBlue80,
+        surfaceTint = BankBlue40,
     )
 
 /**
@@ -76,7 +76,7 @@ private val LightColorScheme =
 @Composable
 fun SurakshaSathiTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Keep false: SBI brand must be preserved
+    dynamicColor: Boolean = false, // Keep false: Bank brand must be preserved
     content: @Composable () -> Unit,
 ) {
     val colorScheme =
@@ -120,3 +120,9 @@ val ColorScheme.warningColor: Color
 /** Colour for MALICIOUS classification labels. */
 val ColorScheme.maliciousColor: Color
     @Composable get() = MaterialTheme.colorScheme.error
+
+/** Colour for the "read, not yet processed" audit-trail state (Message Verification screen's
+ * white status) -- near-white in dark mode, a visible neutral gray in light mode (literal white
+ * would be invisible against a white card). */
+val ColorScheme.pendingColor: Color
+    @Composable get() = if (isSystemInDarkTheme()) Neutral95 else NeutralVar30

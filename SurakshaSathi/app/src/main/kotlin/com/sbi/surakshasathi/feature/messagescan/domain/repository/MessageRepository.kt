@@ -45,13 +45,19 @@ interface MessageRepository {
     suspend fun markRagEscalated(messageId: Long): Result<Unit>
 
     /**
-     * Persists the RAG agent's localized warning/guideline for [messageId] and
-     * marks it escalated in one write (Flow 1b).
+     * Persists the RAG agent's full diagnosis for [messageId] (localized warning/guideline plus
+     * verdict/threatType/confidence/suspiciousSignals) and marks it escalated in one write
+     * (Flow 1b). The richer fields feed NCRP auto-population (Flow 4b) — see
+     * [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning].
      */
     suspend fun saveRagWarning(
         messageId: Long,
         warning: String,
         guideline: String,
+        verdict: String,
+        threatType: String,
+        confidence: Float,
+        suspiciousSignals: List<String>,
     ): Result<Unit>
 
     /**

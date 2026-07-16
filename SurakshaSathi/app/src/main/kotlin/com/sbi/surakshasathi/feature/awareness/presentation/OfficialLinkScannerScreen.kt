@@ -39,7 +39,7 @@ import com.sbi.surakshasathi.core.designsystem.theme.safeColor
 import com.sbi.surakshasathi.core.designsystem.theme.warningColor
 import com.sbi.surakshasathi.feature.awareness.domain.model.OfficialLinkVerdict
 
-/** "Is this the real SBI app?" scanner (§7c 5.1): CameraX + ML Kit Barcode Scanning, plus a manual-paste fallback. */
+/** "Is this the real Bank app?" scanner (§7c 5.1): CameraX + ML Kit Barcode Scanning, plus a manual-paste fallback. */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun OfficialLinkScannerScreen(
@@ -55,7 +55,7 @@ fun OfficialLinkScannerScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Verify Official SBI App", fontWeight = FontWeight.Bold) }) },
+        topBar = { TopAppBar(title = { Text("Verify Official Bank App", fontWeight = FontWeight.Bold) }) },
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Box(modifier = Modifier.fillMaxWidth().weight(1f).background(Color.Black)) {
@@ -89,7 +89,7 @@ fun OfficialLinkScannerScreen(
                         onValueChange = { manualInput = it },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
-                        placeholder = { Text("e.g. sbi.co.in or com.sbi.lotusintouch") },
+                        placeholder = { Text("e.g. bankname.co.in or com.bank.official") },
                     )
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = { viewModel.onCheckManualInput(manualInput) }, enabled = manualInput.isNotBlank()) {
@@ -178,7 +178,7 @@ private fun VerdictOverlay(
                 Button(onClick = { /* deep link to Play Store listing */ }) {
                     Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Open official YONO on Play Store")
+                    Text("Open official YONO Bank on Play Store")
                 }
                 Spacer(Modifier.height(12.dp))
             }

@@ -42,7 +42,7 @@ class ClassifyMessageUseCaseTest {
     fun `test usecase executes and returns success`() = kotlinx.coroutines.test.runTest(testDispatcher) {
         val raw = RawIncomingMessage(
             body = "Warning: your YONO app needs updating.",
-            sender = "SBIYONO",
+            sender = "BANKYONO",
             source = MessageSource.SMS
         )
 

@@ -79,7 +79,7 @@ class PackageInspector
             }
 
         /**
-         * Lightweight Tier-1 static heuristic for SBI-R04: scans classes.dex for
+         * Lightweight Tier-1 static heuristic for BANK-R04: scans classes.dex for
          * the ASCII marker "DexClassLoader"/"PathClassLoader". This is a coarse
          * signal, not full bytecode analysis (that's Tier 3/MaMaDroid territory)
          * — capped to keep this within the Tier-1 latency budget (§8A).

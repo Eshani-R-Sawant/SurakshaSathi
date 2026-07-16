@@ -14,7 +14,7 @@ import java.net.URI
  * integration. [com.sbi.surakshasathi.core.di.NetworkModule] only attaches
  * the [CertificatePinner] when [isConfigured] is true.
  *
- * How to get the real pin once SBI's backend cert is available:
+ * How to get the real pin once the Bank's backend cert is available:
  * ```
  * openssl s_client -connect <host>:443 | \
  *   openssl x509 -pubkey -noout | \
@@ -33,7 +33,7 @@ object NetworkSecurityConfig {
     val isConfigured: Boolean = PIN_PRIMARY != "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
     private val apiHost: String
-        get() = runCatching { URI(BuildConfig.BACKEND_BASE_URL).host }.getOrNull() ?: "api.surakshasathi.sbi.co.in"
+        get() = runCatching { URI(BuildConfig.BACKEND_BASE_URL).host }.getOrNull() ?: "api.surakshasathi.bank.example"
 
     fun certificatePinner(): CertificatePinner =
         CertificatePinner.Builder()

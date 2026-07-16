@@ -7,6 +7,7 @@ import com.sbi.surakshasathi.feature.messagescan.data.classifier.HybridDecisionE
 import com.sbi.surakshasathi.feature.messagescan.data.local.dao.MessageDao
 import com.sbi.surakshasathi.feature.messagescan.data.local.entity.MessageEntity
 import com.sbi.surakshasathi.feature.messagescan.domain.model.Message
+import com.sbi.surakshasathi.feature.messagescan.domain.model.MessageClassification
 import com.sbi.surakshasathi.feature.messagescan.domain.model.RawIncomingMessage
 import com.sbi.surakshasathi.feature.messagescan.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
@@ -45,10 +46,13 @@ class MessageRepositoryImpl
                 val existing = messageDao.getByHash(bodyHash)
                 if (existing != null) return@safeCall existing.toDomain()
 
-                // Run hybrid classification
-                val decision = decisionEngine.decide(raw.body, raw.sender, raw.source)
-
-                val entity =
+                // Write the UNCLASSIFIED row first, before running the classifier -- this is what
+                // makes "read, not yet processed" (the Message Verification screen's white state)
+                // a real, observable row rather than a value nothing ever persists. Classification
+                // below is CPU work (tokenization + TFLite inference); any observer collecting
+                // observeMessages() during that window sees this row exactly as it is: read, not
+                // yet scored.
+                val pendingEntity =
                     MessageEntity(
                         body = raw.body,
                         bodyHash = bodyHash,
@@ -56,16 +60,24 @@ class MessageRepositoryImpl
                         source = raw.source.name,
                         receivedAtMillis = raw.receivedAtMillis,
                         extractedUrlsRaw = raw.extractedUrls.joinToString("|"),
+                        classification = MessageClassification.UNCLASSIFIED.name,
+                        ragEscalated = false,
+                    )
+                val insertedId = messageDao.insert(pendingEntity)
+
+                // Run hybrid classification
+                val decision = decisionEngine.decide(raw.body, raw.sender, raw.source)
+
+                val classifiedEntity =
+                    pendingEntity.copy(
+                        id = insertedId,
                         classification = decision.classification.name,
                         riskScore = decision.riskScore,
                         mlScore = decision.mlScore,
                         ruleScore = decision.ruleScore,
-                        ragEscalated = false,
                     )
-
-                val insertedId = messageDao.insert(entity)
-                messageDao.getById(insertedId)?.toDomain()
-                    ?: throw IllegalStateException("Insert succeeded but row not found")
+                messageDao.update(classifiedEntity)
+                classifiedEntity.toDomain()
             }
 
         override suspend fun getById(id: Long): Result<Message> =
@@ -83,9 +95,21 @@ class MessageRepositoryImpl
             messageId: Long,
             warning: String,
             guideline: String,
+            verdict: String,
+            threatType: String,
+            confidence: Float,
+            suspiciousSignals: List<String>,
         ): Result<Unit> =
             safeCall {
-                messageDao.saveRagWarning(messageId, warning, guideline)
+                messageDao.saveRagWarning(
+                    id = messageId,
+                    warning = warning,
+                    guideline = guideline,
+                    verdict = verdict,
+                    threatType = threatType,
+                    confidence = confidence,
+                    suspiciousSignalsRaw = suspiciousSignals.joinToString("|"),
+                )
             }
 
         override suspend fun deleteMessagesOlderThan(ttlDays: Long): Result<Int> =

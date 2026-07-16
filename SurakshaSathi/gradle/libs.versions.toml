@@ -44,10 +44,12 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 loggingInterceptor = "4.12.0"
 
-# TensorFlow Lite
-tflite = "2.16.1"
-tfliteSupport = "0.4.4"
-tfliteMetadata = "0.4.4"
+# PyTorch Mobile (on-device spam classifier) — see feature/messagescan/data/classifier's
+# PyTorchSpamClassifier for why this is used instead of TensorFlow Lite: the project's
+# PyTorch->TFLite export toolchain (litert-torch) ships no Windows build and produced a
+# non-discriminative model even where it did build, so the real trained weights are shipped via
+# PyTorch's own official mobile export path instead.
+pytorchMobile = "1.13.1"
 
 # ML Kit
 mlkitFaceDetection = "16.1.7"
@@ -59,6 +61,7 @@ cameraX = "1.4.1"
 # Google Maps
 mapsCompose = "4.4.1"
 playServicesMaps = "19.0.0"
+playServicesLocation = "21.3.0"
 
 # Firebase
 firebaseBom = "33.7.0"
@@ -152,10 +155,8 @@ retrofit-serialization = { group = "com.squareup.retrofit2", name = "converter-k
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
 
-# TensorFlow Lite
-tflite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tflite" }
-tflite-support = { group = "org.tensorflow", name = "tensorflow-lite-support", version.ref = "tfliteSupport" }
-tflite-metadata = { group = "org.tensorflow", name = "tensorflow-lite-metadata", version.ref = "tfliteMetadata" }
+# PyTorch Mobile
+pytorch-mobile-lite = { group = "org.pytorch", name = "pytorch_android_lite", version.ref = "pytorchMobile" }
 
 # ML Kit
 mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }
@@ -171,6 +172,7 @@ camerax-extensions = { group = "androidx.camera", name = "camera-extensions", ve
 # Google Maps
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
@@ -224,6 +226,5 @@ compose = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview", "c
 camerax = ["camerax-core", "camerax-camera2", "camerax-lifecycle", "camerax-view", "camerax-extensions"]
 room = ["room-runtime", "room-ktx"]
 retrofit = ["retrofit", "retrofit-serialization", "okhttp", "okhttp-logging"]
-tflite = ["tflite", "tflite-support", "tflite-metadata"]
 media3 = ["media3-exoplayer", "media3-ui", "media3-datasource-okhttp"]
 testing-unit = ["junit5-api", "junit5-params", "mockk", "turbine", "kotlin-coroutines-test"]

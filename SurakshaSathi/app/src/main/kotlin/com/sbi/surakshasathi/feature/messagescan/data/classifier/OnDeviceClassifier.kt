@@ -4,7 +4,7 @@ package com.sbi.surakshasathi.feature.messagescan.data.classifier
  * Contract for on-device message classifiers.
  *
  * Implementations:
- * - [TfLiteSpamClassifier] — INT8-quantized TFLite model
+ * - [PyTorchSpamClassifier] — the real trained model, served via PyTorch Mobile
  * - [RuleBasedClassifier] — deterministic keyword/pattern rules
  *
  * Domain-adjacent interface (data layer), but kept framework-free

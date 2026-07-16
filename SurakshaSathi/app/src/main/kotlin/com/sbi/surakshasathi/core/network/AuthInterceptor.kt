@@ -4,7 +4,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * OkHttp interceptor that attaches the SBI API authentication header.
+ * OkHttp interceptor that attaches the Bank API authentication header.
  *
  * In production: reads the session token from the in-memory session store
  * (injected via [com.sbi.surakshasathi.core.datastore.UserPreferencesDataStore]).

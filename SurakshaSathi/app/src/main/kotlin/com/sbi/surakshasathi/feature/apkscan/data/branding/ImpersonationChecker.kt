@@ -4,9 +4,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Tier 1.3 (§5) — the core hackathon detection: a package that *looks* like
- * YONO but is signed by a non-SBI certificate is impersonation, full stop,
- * decided on-device with zero network calls.
+ * Tier 1.3 (§5) — the core hackathon detection: a package that *looks* like a known bank's app
+ * (SBI/YONO, HDFC, ICICI, Axis, Bank of Baroda, PNB — see [BankAllowList]) but is signed by a
+ * non-matching certificate is impersonation, full stop, decided on-device with zero network
+ * calls. Not SBI-specific — this app protects customers of any bank it recognizes.
  */
 @Singleton
 class ImpersonationChecker
@@ -20,13 +21,13 @@ class ImpersonationChecker
             appLabel: String,
             signingCertSha256: List<String>,
         ): Boolean {
-            if (SbiAllowList.isOfficialPackageName(packageName)) {
+            if (BankAllowList.isOfficialPackageName(packageName)) {
                 // Claims to be an official package name — its cert MUST match.
-                val expected = SbiAllowList.expectedCertsFor(packageName)
+                val expected = BankAllowList.expectedCertsFor(packageName)
                 return signingCertSha256.none { it in expected }
             }
 
-            // Not the official package name, but branded like SBI/YONO — always impersonation.
-            return SbiAllowList.looksLikeSbiBranding(packageName, appLabel)
+            // Not an official package name, but branded like a known bank — always impersonation.
+            return BankAllowList.looksLikeKnownBankBranding(packageName, appLabel)
         }
     }

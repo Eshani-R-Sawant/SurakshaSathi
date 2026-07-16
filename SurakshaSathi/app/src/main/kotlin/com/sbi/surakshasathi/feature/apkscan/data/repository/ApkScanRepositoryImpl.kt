@@ -177,11 +177,11 @@ class ApkScanRepositoryImpl
                 }
             if (tier2 is Result.Success && tier2.data.verdictEnum() != ApkVerdict.UNKNOWN) {
                 val verdict = tier2.data.verdictEnum()
-                cacheVerdict(sha256, packageName, appLabel, verdict, "sbi_threat_api", engineHits = tier2.data.engineHits)
+                cacheVerdict(sha256, packageName, appLabel, verdict, "bank_threat_api", engineHits = tier2.data.engineHits)
                 return ApkScanResult(
                     packageName = packageName, appLabel = appLabel, sha256 = sha256,
                     verdict = verdict, isImpersonation = false,
-                    tierReached = ScanTier.TIER2_CLOUD, source = "sbi_threat_api",
+                    tierReached = ScanTier.TIER2_CLOUD, source = "bank_threat_api",
                     engineHits = tier2.data.engineHits, localRiskScore = localRisk,
                     triggeredRuleIds = ruleMatches.map { it.ruleId }, scannedAtMillis = now,
                 )

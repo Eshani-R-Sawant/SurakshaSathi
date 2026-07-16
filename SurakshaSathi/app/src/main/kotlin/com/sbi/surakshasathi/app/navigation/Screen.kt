@@ -51,9 +51,16 @@ sealed class Screen(val route: String) {
     // Flow 4a: Fraud Dashboard
     data object FraudHeatmap : Screen("fraud_heatmap")
 
-    // Flow 4b: NCRP Report
-    data object NcrpReport : Screen("ncrp_report/{contextId}") {
-        fun createRoute(id: String) = "ncrp_report/$id"
+    // Flow 4b: NCRP Report. contextType selects which auto-populate path NcrpReportViewModel
+    // uses ("message" | "apk" | "manual") -- previously a single ambiguous contextId string was
+    // sniffed (numeric = message, else = APK package name), which meant a manual report
+    // (no message/APK context) silently misfired into the APK lookup branch.
+    data object NcrpReport : Screen("ncrp_report/{contextType}/{contextId}") {
+        fun createRouteForMessage(messageId: Long) = "ncrp_report/message/$messageId"
+
+        fun createRouteForApk(packageName: String) = "ncrp_report/apk/$packageName"
+
+        fun createRouteManual() = "ncrp_report/manual/none"
     }
 
     // Flow 5: Awareness
@@ -66,4 +73,23 @@ sealed class Screen(val route: String) {
     }
 
     data object Badges : Screen("badges")
+
+    // Flow 7: Games & Advisories
+    data object GameHub : Screen("game_hub")
+
+    data object ShieldDefenderGame : Screen("game/shield_defender")
+
+    data object FakeAppDetectiveGame : Screen("game/fake_app_detective")
+
+    data object FraudTrafficControlGame : Screen("game/fraud_traffic_control")
+
+    data object BubblePopScamGame : Screen("game/bubble_pop_scam")
+
+    data object SecurePhoneBuilderGame : Screen("game/secure_phone_builder")
+
+    data object AdvisoryList : Screen("advisories")
+
+    data object AdvisoryDetail : Screen("advisory/{advisoryId}") {
+        fun createRoute(id: String) = "advisory/$id"
+    }
 }
