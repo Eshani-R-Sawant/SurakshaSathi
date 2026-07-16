@@ -180,7 +180,7 @@ class NcrpReportViewModel
             val summary =
                 buildList {
                     apkResult?.verdict?.let { add("Verdict: $it") }
-                    if (apkResult?.isImpersonation == true) add("Impersonates official Bank/YONO branding")
+                    if (apkResult?.isImpersonation == true) add("Impersonates official banking app branding")
                     apkResult?.tierReached?.let { add("Detected at: $it") }
                     if (apkResult?.triggeredRuleIds.orEmpty().isNotEmpty()) {
                         add("Rules triggered: " + apkResult!!.triggeredRuleIds.joinToString(", "))

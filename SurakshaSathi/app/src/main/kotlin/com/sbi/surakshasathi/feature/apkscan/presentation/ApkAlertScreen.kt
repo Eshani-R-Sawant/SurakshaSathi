@@ -78,7 +78,7 @@ fun ApkAlertScreen(
                         modifier = Modifier.size(88.dp),
                     )
                     Text(
-                        if (result.isImpersonation) "Fake Bank/YONO App Detected" else "Malicious App Detected",
+                        if (result.isImpersonation) "Fake Banking App Detected" else "Malicious App Detected",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -100,7 +100,7 @@ fun ApkAlertScreen(
                             DetailRow("Detected by", tierLabel(result.tierReached))
                             DetailRow("Source", result.source)
                             if (result.isImpersonation) {
-                                DetailRow("Reason", "Signing certificate does not match official Bank/YONO")
+                                DetailRow("Reason", "Signing certificate does not match the official bank app")
                             }
                             if (result.triggeredRuleIds.isNotEmpty()) {
                                 DetailRow("Rules triggered", result.triggeredRuleIds.joinToString(", "))

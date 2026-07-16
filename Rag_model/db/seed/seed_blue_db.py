@@ -93,7 +93,7 @@ def seed():
     init_db(engine)
     Session = get_session_factory()
 
-    messages_df = pd.read_csv(DATA_DIR / "blue_db_messages_clustered.csv")
+    messages_df = pd.read_csv(DATA_DIR / "blue_db_messages_clustered.csv", dtype={"user_phone": str, "sender": str})
     clusters_df = pd.read_csv(DATA_DIR / "blue_db_clusters.csv")
     now = datetime.now(timezone.utc)
 

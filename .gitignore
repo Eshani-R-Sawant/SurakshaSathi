@@ -1,17 +1,44 @@
-# Rag_model backend
-Rag_model/.env
-Rag_model/**/__pycache__/
-Rag_model/**/*.pyc
-Rag_model/.venv/
-Rag_model/venv/
-Rag_model/uvicorn_out.log
-Rag_model/uvicorn_err.log
-Rag_model/*firebase-adminsdk*.json
-Rag_model/google-services.json
+# Virtual Environments
+.venv/
+.venv-1/
+.venv_verify/
+venv/
+*venv*/
+**/__pycache__/
+**/*.pyc
 
-# sms_spam_detector_v2
-sms_spam_detector_v2/**/__pycache__/
-sms_spam_detector_v2/**/*.pyc
-sms_spam_detector_v2/checkpoints/
-sms_spam_detector_v2/.venv/
-sms_spam_detector_v2/venv/
+# Large Binary Files (>100MB) and Models
+*.ptl
+**/*.ptl
+*.tflite
+**/*.tflite
+*.exe
+*.dll
+*.lib
+
+# Android Build / IDE Metadata
+.gradle/
+build/
+app/build/
+.kotlin/
+.idea/
+*.iml
+local.properties
+
+# Logs, Screenshots, and Deployment Artifacts
+*.log
+*.zip
+*.png
+screenshot.png
+azure_logs*/
+deploy_detail.json
+deploy_log.json
+rag_deploy_staging/
+ui*.xml
+startup_cmd.txt
+.gitattributes_local_copy_unused
+
+# Secrets
+.env
+*firebase-adminsdk*.json
+google-services.json

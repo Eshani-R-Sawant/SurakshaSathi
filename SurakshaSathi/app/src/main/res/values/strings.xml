@@ -21,7 +21,7 @@
     <string name="notification_listener_label">SurakshaSathi Message Scanner</string>
 
     <!-- RAG warning notification (Flow 1b) -->
-    <string name="rag_warning_notification_title">⚠️ This may be a fake Bank/YONO message</string>
+    <string name="rag_warning_notification_title">⚠️ This may be a fake banking message</string>
     <string name="rag_warning_notification_report_action">Report</string>
 
     <!-- APK alert notification (Flow 2) -->

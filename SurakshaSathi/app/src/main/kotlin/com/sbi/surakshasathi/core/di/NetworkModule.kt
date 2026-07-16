@@ -44,8 +44,11 @@ object NetworkModule {
         val builder =
             OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
+                // RAG scan responses involve an LLM generation call plus, for non-English
+                // requests, a translation pass -- real round trips run 20-35s, so 30s was
+                // clipping legitimate in-flight responses and forcing a fallback to canned text.
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .addInterceptor(AuthInterceptor())
                 .followRedirects(false) // Be explicit about redirects for security
 

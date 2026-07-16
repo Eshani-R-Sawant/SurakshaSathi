@@ -152,6 +152,11 @@ android {
     // 16 KB memory-page-size compliance (Play Store requirement)
     androidResources {
         generateLocaleConfig = true
+        // AAPT compresses assets by default, but AssetManager.openFd() (used to get a raw file
+        // descriptor for PyTorch Mobile's model load) requires the entry to be stored
+        // uncompressed -- without this, loading spam_classifier_mobile.ptl throws
+        // FileNotFoundException ("probably compressed") and the real model silently never loads.
+        noCompress += "ptl"
     }
 }
 
