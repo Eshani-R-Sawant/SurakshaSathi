@@ -36,5 +36,13 @@ interface RagApi {
         @Part("original_message") originalMessage: RequestBody,
         @Part("language") language: RequestBody,
         @Part("ml_model_metadata") mlModelMetadata: RequestBody,
+        // Onboarding persona (see core/common/IndiaRegions.kt's Personas / clustering/persona.py's
+        // fixed category set) -- lets the backend tailor Layer B's micro-lesson tone (e.g.
+        // senior_citizen: short sentences, no jargon) in the same single call, not a second one.
+        // Optional: null until the user has completed the persona picker.
+        @Part("user_persona") userPersona: RequestBody? = null,
+        // Registered reporter's phone (core/datastore's UserPreferences.userPhone) -- the
+        // recipient, not the fraud message's spoofed sender. Optional: null until Registration.
+        @Part("user_phone") userPhone: RequestBody? = null,
     ): MessageScanResponseDto
 }

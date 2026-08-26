@@ -106,7 +106,6 @@ private fun GameCard(
 private fun routeFor(type: GameType): String =
     when (type) {
         GameType.SHIELD_DEFENDER -> Screen.ShieldDefenderGame.route
-        GameType.FAKE_APP_DETECTIVE -> Screen.FakeAppDetectiveGame.route
         GameType.FRAUD_TRAFFIC_CONTROL -> Screen.FraudTrafficControlGame.route
         GameType.BUBBLE_POP_SCAM -> Screen.BubblePopScamGame.route
         GameType.SECURE_PHONE_BUILDER -> Screen.SecurePhoneBuilderGame.route
@@ -115,7 +114,6 @@ private fun routeFor(type: GameType): String =
 private fun iconFor(type: GameType): ImageVector =
     when (type) {
         GameType.SHIELD_DEFENDER -> Icons.Filled.Shield
-        GameType.FAKE_APP_DETECTIVE -> Icons.Filled.Apps
         GameType.FRAUD_TRAFFIC_CONTROL -> Icons.Filled.Sensors
         GameType.BUBBLE_POP_SCAM -> Icons.Filled.Whatshot
         GameType.SECURE_PHONE_BUILDER -> Icons.Filled.PhoneAndroid

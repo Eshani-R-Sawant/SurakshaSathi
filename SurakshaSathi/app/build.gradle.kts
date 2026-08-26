@@ -152,11 +152,11 @@ android {
     // 16 KB memory-page-size compliance (Play Store requirement)
     androidResources {
         generateLocaleConfig = true
-        // AAPT compresses assets by default, but AssetManager.openFd() (used to get a raw file
-        // descriptor for PyTorch Mobile's model load) requires the entry to be stored
-        // uncompressed -- without this, loading spam_classifier_mobile.ptl throws
+        // AAPT compresses assets by default, but the TFLite Interpreter memory-maps the model
+        // file directly -- without this, loading spam_classifier_mobile.tflite throws
         // FileNotFoundException ("probably compressed") and the real model silently never loads.
-        noCompress += "ptl"
+        // (This exact bug previously hit the .ptl PyTorch Mobile asset for the same reason.)
+        noCompress += "tflite"
     }
 }
 
@@ -211,8 +211,8 @@ dependencies {
     // ── WorkManager ───────────────────────────────────────────────────────────
     implementation(libs.androidx.work.runtime)
 
-    // ── PyTorch Mobile (on-device ML) ───────────────────────────────────────────
-    implementation(libs.pytorch.mobile.lite)
+    // ── TensorFlow Lite (on-device ML) ──────────────────────────────────────────
+    implementation(libs.tensorflow.lite)
 
     // ── ML Kit ────────────────────────────────────────────────────────────────
     implementation(libs.mlkit.face.detection)

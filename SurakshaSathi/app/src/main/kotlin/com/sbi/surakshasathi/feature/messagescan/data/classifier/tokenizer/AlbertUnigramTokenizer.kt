@@ -21,7 +21,7 @@ import java.text.Normalizer
  * tests ([com.sbi.surakshasathi.feature.messagescan.data.classifier.tokenizer.AlbertUnigramTokenizerTest]),
  * not by inspection alone — token-id mismatches here would silently feed garbage embeddings into
  * an otherwise-correct model. Used by
- * [com.sbi.surakshasathi.feature.messagescan.data.classifier.PyTorchSpamClassifier].
+ * [com.sbi.surakshasathi.feature.messagescan.data.classifier.TFLiteSpamClassifier].
  *
  * Pipeline (mirrors tokenizer.json's normalizer/pre_tokenizer sequence exactly):
  * 1. Normalize: curly-quote -> straight-quote, NFKD, strip combining marks, lowercase, collapse
@@ -181,7 +181,7 @@ class AlbertUnigramTokenizer private constructor(
 
         /** Loads the tokenizer from the two assets written by
          * `export_mobile_tokenizer_vocab.py`. Throws if either asset is missing/malformed —
-         * callers (see [com.sbi.surakshasathi.feature.messagescan.data.classifier.PyTorchSpamClassifier])
+         * callers (see [com.sbi.surakshasathi.feature.messagescan.data.classifier.TFLiteSpamClassifier])
          * catch and fall back to the keyword heuristic, same as a missing model file. */
         fun loadFromAssets(context: Context): AlbertUnigramTokenizer {
             val assets = context.assets

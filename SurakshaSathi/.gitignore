@@ -10,3 +10,9 @@ captures/
 .DS_Store
 Thumbs.db
 *.log
+
+# ── Agent / coding-tool artifacts ────────────────────────────────────────────
+.claude/
+.agents/
+implementation_plan*.md
+SurakshaSathi_ClaudeCode_Prompt*.md

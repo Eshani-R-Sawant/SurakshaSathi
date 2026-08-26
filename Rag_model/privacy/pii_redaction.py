@@ -110,3 +110,27 @@ class PiiRedactor:
         text = self._redact_regex(text)
         text = self._redact_presidio(text)
         return text
+
+
+_redactor_singleton: "PiiRedactor | None" = None
+
+
+def get_redactor() -> "PiiRedactor":
+    """Process-wide lazy singleton -- Presidio/spaCy model load is slow, do it once."""
+    global _redactor_singleton
+    if _redactor_singleton is None:
+        _redactor_singleton = PiiRedactor()
+    return _redactor_singleton
+
+
+def redact_for_external_use(text: str) -> str:
+    """Convenience wrapper shared by every call site that sends/persists text outside this
+    process (message_scan.py, guardian_chat.py): masks Aadhaar/card/email/name/phone-number PII.
+    Fails CLOSED, not open -- if redaction itself errors (model not downloaded, unexpected input),
+    returns a placeholder rather than risk forwarding raw, unredacted PII to an external LLM API
+    or a persisted log.
+    """
+    try:
+        return get_redactor().redact(text)
+    except Exception:
+        return "[message unavailable -- redaction failed]"

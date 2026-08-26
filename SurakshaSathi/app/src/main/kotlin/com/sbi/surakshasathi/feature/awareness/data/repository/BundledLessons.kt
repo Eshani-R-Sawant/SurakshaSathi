@@ -12,46 +12,6 @@ object BundledLessons {
     val ENGLISH: List<Lesson> =
         listOf(
             Lesson(
-                id = "real_vs_fake_bank_app",
-                title = "Real vs Fake Bank Apps",
-                description = "Learn the signs that separate the official YONO Bank app from a fake one.",
-                language = "en",
-                badgeIdOnCompletion = "badge_yono_expert",
-                quiz =
-                    listOf(
-                        QuizQuestion(
-                            "A message asks you to install YONO from a link in WhatsApp. What should you do?",
-                            listOf(
-                                "Tap the link and install it",
-                                "Only install YONO from the Play Store or bankname.co.in",
-                                "Install it if the icon looks right",
-                                "Forward it to a friend to check",
-                            ),
-                            correctOptionIndex = 1,
-                        ),
-                        QuizQuestion(
-                            "Which of these is the strongest sign an app is fake, even if the icon and name look right?",
-                            listOf(
-                                "It asks for your name",
-                                "Its signing certificate doesn't match the Bank's official one",
-                                "It has a splash screen",
-                                "It's in English",
-                            ),
-                            correctOptionIndex = 1,
-                        ),
-                        QuizQuestion(
-                            "The real YONO app will NEVER ask you to do which of these?",
-                            listOf(
-                                "Log in with your username",
-                                "Share your OTP or MPIN over chat to \"verify\" your account",
-                                "Show your balance",
-                                "Let you set a PIN",
-                            ),
-                            correctOptionIndex = 1,
-                        ),
-                    ),
-            ),
-            Lesson(
                 id = "never_share_otp",
                 title = "Never Share Your OTP",
                 description = "OTP-sharing is the #1 way fraudsters drain bank accounts. Learn why it's never okay.",

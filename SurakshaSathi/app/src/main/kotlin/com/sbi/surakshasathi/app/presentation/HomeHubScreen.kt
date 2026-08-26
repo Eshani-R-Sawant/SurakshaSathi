@@ -172,9 +172,9 @@ fun HomeHubScreen(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 QuickActionCard(
-                    icon = Icons.Filled.QrCodeScanner,
-                    title = "Verify Link",
-                    subtitle = "Is this official Bank?",
+                    icon = Icons.Filled.SportsEsports,
+                    title = "Learn & Play Games",
+                    subtitle = "Lessons and games that teach you to spot scams",
                     color = SafeGreen80,
                     modifier = Modifier.weight(1f),
                     onClick = { navController.navigate(Screen.Learn.route) },
@@ -187,17 +187,6 @@ fun HomeHubScreen(
                     modifier = Modifier.weight(1f),
                     onClick = { navController.navigate(Screen.NcrpReport.createRouteManual()) },
                 )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                QuickActionCard(
-                    icon = Icons.Filled.Fingerprint,
-                    title = "Try Secure Transfer",
-                    subtitle = "See adaptive friction live",
-                    color = SafeGreen80,
-                    modifier = Modifier.weight(1f),
-                    onClick = { navController.navigate(Screen.ConfirmTransfer.route) },
-                )
-                Spacer(Modifier.weight(1f))
             }
         }
 

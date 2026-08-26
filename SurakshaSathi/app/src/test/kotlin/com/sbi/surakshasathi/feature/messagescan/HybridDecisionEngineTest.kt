@@ -2,7 +2,7 @@ package com.sbi.surakshasathi.feature.messagescan
 
 import com.sbi.surakshasathi.feature.messagescan.data.classifier.HybridDecisionEngine
 import com.sbi.surakshasathi.feature.messagescan.data.classifier.RuleBasedClassifier
-import com.sbi.surakshasathi.feature.messagescan.data.classifier.PyTorchSpamClassifier
+import com.sbi.surakshasathi.feature.messagescan.data.classifier.TFLiteSpamClassifier
 import com.sbi.surakshasathi.feature.messagescan.domain.model.MessageClassification
 import io.mockk.every
 import io.mockk.mockk
@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test
 
 class HybridDecisionEngineTest {
 
-    private val mlClassifier = mockk<PyTorchSpamClassifier>()
+    private val mlClassifier = mockk<TFLiteSpamClassifier>()
     private val ruleClassifier = mockk<RuleBasedClassifier>()
     private val engine = HybridDecisionEngine(mlClassifier, ruleClassifier)
 
     @Test
     fun `test decide safe when both classifiers score low`() {
-        every { mlClassifier.classify(any()) } returns 0.1f
+        every { mlClassifier.classifyWithSender(any(), any()) } returns 0.1f
         every { ruleClassifier.classifyWithSender(any(), any()) } returns 0.1f
 
         val decision = engine.decide("Hello there", "123456")
@@ -29,7 +29,7 @@ class HybridDecisionEngineTest {
 
     @Test
     fun `test decide suspicious when combined score crosses threshold`() {
-        every { mlClassifier.classify(any()) } returns 0.5f
+        every { mlClassifier.classifyWithSender(any(), any()) } returns 0.5f
         every { ruleClassifier.classifyWithSender(any(), any()) } returns 0.3f
 
         val decision = engine.decide("Some message", "123456")
@@ -41,7 +41,7 @@ class HybridDecisionEngineTest {
 
     @Test
     fun `test decide malicious when combined score is high`() {
-        every { mlClassifier.classify(any()) } returns 0.8f
+        every { mlClassifier.classifyWithSender(any(), any()) } returns 0.8f
         every { ruleClassifier.classifyWithSender(any(), any()) } returns 0.7f
 
         val decision = engine.decide("Critical alert update now", "123456")

@@ -42,3 +42,15 @@ startup_cmd.txt
 .env
 *firebase-adminsdk*.json
 google-services.json
+
+# Database backups
+azure_db_full_backup.json
+
+# Agent / coding-tool artifacts
+.claude/
+.agents/
+pip_cache/
+*_local_copy_unused/
+implementation_plan*.md
+SurakshaSathi_ClaudeCode_Prompt*.md
+Rag_model/scratch/

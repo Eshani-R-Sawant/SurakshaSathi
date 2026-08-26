@@ -30,6 +30,7 @@ from common.schemas import ContentType, ThreatReport
 from config.settings import settings
 from llm.groq_client import generate_threat_report
 from llm.prompt_templates import build_per_message_prompt
+from privacy.pii_redaction import redact_for_external_use
 from url_qr_callback_engine.l1_triage import triage
 
 router = APIRouter()
@@ -48,6 +49,14 @@ class MessageScanRequest:
     ml_model_metadata: dict | None = None  # from the Android on-device classifier, online-only
     has_image_attachment: bool = False
     callback_number: str | None = None
+    # Onboarding persona the Android client already collects (clustering/persona.py's fixed
+    # category set) but previously never sent here -- lets the LLM tailor tone (see
+    # llm.prompt_templates._PERSONA_TONE_HINTS) for e.g. senior_citizen without a second call.
+    user_persona: str | None = None
+    # Phone number of the registered user reporting this message (api/routes/user_registration.py)
+    # -- the recipient, NOT the fraud message's spoofed sender. Threaded through to persistence
+    # only; not used in the LLM prompt.
+    user_phone: str | None = None
 
 
 class MessageScanResponse(BaseModel):
@@ -207,14 +216,21 @@ async def _localize_report(report: ThreatReport, language: str) -> ThreatReport:
     from language.translate import translate_from_english
 
     try:
-        explanation, action = await asyncio.gather(
+        explanation, action, micro_lesson = await asyncio.gather(
             asyncio.to_thread(translate_from_english, report.plain_language_explanation, language),
             asyncio.to_thread(translate_from_english, report.recommended_action, language),
+            # micro_lesson is the adaptive-friction Layer B education text -- it needs the same
+            # localization pass as the other two user-facing fields, or non-English users would
+            # see a full paragraph of English dropped into an otherwise-localized screen.
+            asyncio.to_thread(translate_from_english, report.micro_lesson, language)
+            if report.micro_lesson
+            else asyncio.sleep(0, result=""),
         )
         return report.model_copy(
             update={
                 "plain_language_explanation": explanation,
                 "recommended_action": action,
+                "micro_lesson": micro_lesson or report.micro_lesson,
                 "language": language,
             }
         )
@@ -233,6 +249,8 @@ async def scan_message(
     attachment_type: str | None = Form(None),  # "qr" | "image" | "video" | "file"
     package_name: str | None = Form(None),  # only used when attachment_type == "file" and it's an APK
     cert_sha256: str | None = Form(None),
+    user_persona: str | None = Form(None),  # Android's onboarding persona -- see MessageScanRequest.user_persona
+    user_phone: str | None = Form(None),  # registered reporter's phone -- see MessageScanRequest.user_phone
     attachment: UploadFile | None = File(None),
 ) -> MessageScanResponse:
     start = time.monotonic()
@@ -258,6 +276,8 @@ async def scan_message(
         ml_model_metadata=parsed_metadata,
         has_image_attachment=has_image_attachment,
         callback_number=callback_number,
+        user_persona=user_persona,
+        user_phone=user_phone,
     )
 
     # Blocking HTTP calls are pushed to a thread so they don't stall the event loop -- otherwise
@@ -349,20 +369,61 @@ async def scan_message(
     retrieved_docs = results["retrieved_docs"]
     web_corroboration = results["web_corroboration"]
 
+    # Redact PII (Aadhaar/card/email/name/phone) from the copy that leaves this process -- to the
+    # LLM prompt and to storage. Everything above this line (triage, URL/callback analysis) has
+    # already run against the raw text, which is required for those checks to work correctly; per
+    # privacy/pii_redaction.py's documented rule, redaction must only touch the externally-sent/
+    # persisted copy, never the copy used for technical extraction.
+    message_english_for_llm = await asyncio.to_thread(redact_for_external_use, message_english)
+
     prompt = build_per_message_prompt(
-        query_message_english=message_english,
+        query_message_english=message_english_for_llm,
         detection_results=detection_results,
         retrieved_docs=retrieved_docs,
         web_corroboration=web_corroboration,
         ml_model_metadata=req.ml_model_metadata,
+        user_persona=req.user_persona,
     )
-    report = await asyncio.to_thread(generate_threat_report, prompt)
+    report = await asyncio.to_thread(_generate_threat_report_cached, prompt, message_english_for_llm)
     report = await _localize_report(report, language)
 
     content_type = _determine_content_type(triage_result, attachment_type, is_apk_attachment)
-    asyncio.create_task(_persist_message_async(req, language, message_english, content_type))
+    original_message_for_storage = await asyncio.to_thread(redact_for_external_use, req.original_message)
+    asyncio.create_task(
+        _persist_message_async(req, language, message_english_for_llm, content_type, original_message_for_storage)
+    )
 
     return MessageScanResponse(report=report, latency_ms=int((time.monotonic() - start) * 1000))
+
+
+# Real-world fraud campaigns blast near-identical templated text to thousands of recipients --
+# caching the generated report by a hash of the (redacted, English) message text means the 2nd..Nth
+# report of the same campaign is a Redis hit instead of another Groq call, which is what actually
+# keeps Groq spend flat as message volume grows (rather than growing ~linearly with it). Keyed on
+# the post-redaction text specifically, since two messages that differ only in the PII they contain
+# (e.g. two different names) should still hit the same cache entry -- the fraud pattern is identical.
+_REPORT_CACHE_TTL_SECONDS = 6 * 3600
+
+
+def _generate_threat_report_cached(prompt: str, cache_key_text: str) -> ThreatReport:
+    import hashlib
+
+    from db.redis_client import cache_get, cache_set
+
+    cache_key = "msg_scan_report:" + hashlib.sha256(cache_key_text.encode("utf-8")).hexdigest()
+    cached = cache_get(cache_key)
+    if cached:
+        try:
+            return ThreatReport.model_validate(json.loads(cached))
+        except Exception:
+            pass  # corrupt/incompatible cache entry -- fall through to a fresh generation
+
+    report = generate_threat_report(prompt)
+    try:
+        cache_set(cache_key, report.model_dump_json(), _REPORT_CACHE_TTL_SECONDS)
+    except Exception:
+        pass  # caching is an optimization, never load-bearing for the response
+    return report
 
 
 def _determine_content_type(triage_result, attachment_type: str | None, is_apk_attachment: bool) -> ContentType:
@@ -385,7 +446,13 @@ def _retrieve_guideline_docs(message_english: str) -> list[str]:
     return retrieve_guideline_docs(message_english, top_k=3)
 
 
-def _persist_message_blocking(req: MessageScanRequest, language: str, message_english: str, content_type: ContentType) -> None:
+def _persist_message_blocking(
+    req: MessageScanRequest,
+    language: str,
+    message_english_redacted: str,
+    content_type: ContentType,
+    original_message_redacted: str,
+) -> None:
     from datetime import datetime, timezone
 
     from db.postgres_client import Message, get_session_factory
@@ -395,14 +462,18 @@ def _persist_message_blocking(req: MessageScanRequest, language: str, message_en
         session.merge(
             Message(
                 message_id=req.message_id,
-                original_message=req.original_message,
+                # PII-redacted copies only -- see redact_for_external_use. Raw text was already
+                # used upstream for triage/URL/callback extraction; nothing raw reaches storage.
+                original_message=original_message_redacted,
                 language=language,
-                message_english=message_english,
+                message_english=message_english_redacted,
                 needs_translation=(language != "en"),
                 channel="sms",
                 content_type=content_type.value,
                 region=None,
+                persona=req.user_persona,
                 sender=(req.ml_model_metadata or {}).get("sender"),
+                user_phone=req.user_phone,
                 cluster_id=None,  # assigned by the DenStream router, not inline in the request path
                 timestamp=datetime.now(timezone.utc),
             )
@@ -411,7 +482,11 @@ def _persist_message_blocking(req: MessageScanRequest, language: str, message_en
 
 
 async def _persist_message_async(
-    req: MessageScanRequest, language: str, message_english: str, content_type: ContentType
+    req: MessageScanRequest,
+    language: str,
+    message_english_redacted: str,
+    content_type: ContentType,
+    original_message_redacted: str,
 ) -> None:
     if not settings.postgres_dsn:
         return  # Cloud SQL not provisioned yet -- nothing to persist to
@@ -421,6 +496,8 @@ async def _persist_message_async(
         # event loop the moment the loop picks this task up, which delayed flushing the client's
         # HTTP response by several seconds in testing (measured latency_ms was fine; wall-clock
         # wasn't, because the response bytes hadn't actually been written to the socket yet).
-        await asyncio.to_thread(_persist_message_blocking, req, language, message_english, content_type)
+        await asyncio.to_thread(
+            _persist_message_blocking, req, language, message_english_redacted, content_type, original_message_redacted
+        )
     except Exception as e:
         print(f"_persist_message_async failed (non-fatal, response already sent): {e}")

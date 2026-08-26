@@ -8,6 +8,7 @@ import com.sbi.surakshasathi.BuildConfig
 import com.sbi.surakshasathi.feature.apkscan.data.worker.ThreatCacheCleanupWorker
 import com.sbi.surakshasathi.feature.frauddashboard.data.worker.RegionalAlertSyncWorker
 import com.sbi.surakshasathi.feature.messagescan.data.worker.MessageCleanupWorker
+import com.sbi.surakshasathi.feature.messagescan.data.worker.QuarantineExpiryWorker
 import com.sbi.surakshasathi.feature.ncrpreport.data.worker.NcrpReportCleanupWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -42,6 +43,7 @@ class SurakshaSathiApplication : Application(), Configuration.Provider {
         super.onCreate()
         val workManager = WorkManager.getInstance(this)
         MessageCleanupWorker.scheduleCleanup(workManager)
+        QuarantineExpiryWorker.scheduleCleanup(workManager)
         ThreatCacheCleanupWorker.scheduleCleanup(workManager)
         NcrpReportCleanupWorker.scheduleCleanup(workManager)
         RegionalAlertSyncWorker.scheduleSync(workManager)

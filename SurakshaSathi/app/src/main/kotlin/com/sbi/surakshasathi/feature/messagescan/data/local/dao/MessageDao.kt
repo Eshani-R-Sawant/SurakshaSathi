@@ -17,15 +17,28 @@ interface MessageDao {
     @Query("SELECT * FROM messages ORDER BY received_at_millis DESC")
     fun observeAll(): Flow<List<MessageEntity>>
 
-    /** Reactive: only SUSPICIOUS or MALICIOUS messages. */
+    /** Reactive: only SUSPICIOUS or MALICIOUS messages, EXCLUDING quarantined ones — the moment
+     * a message is quarantined (see [setQuarantine]) it drops out of the default Alerts list/badge
+     * count, and only reappears here if/when quarantine lifts. Use [observeQuarantined] for the
+     * separate "Under Review" holding area. */
     @Query(
         """
         SELECT * FROM messages
-        WHERE classification IN ('SUSPICIOUS', 'MALICIOUS')
+        WHERE classification IN ('SUSPICIOUS', 'MALICIOUS') AND is_quarantined = 0
         ORDER BY received_at_millis DESC
     """,
     )
     fun observeFlagged(): Flow<List<MessageEntity>>
+
+    /** Reactive: messages currently tucked away in the "Under Review" quarantine holding area. */
+    @Query(
+        """
+        SELECT * FROM messages
+        WHERE is_quarantined = 1
+        ORDER BY received_at_millis DESC
+    """,
+    )
+    fun observeQuarantined(): Flow<List<MessageEntity>>
 
     @Query("SELECT * FROM messages WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): MessageEntity?
@@ -45,13 +58,16 @@ interface MessageDao {
     suspend fun markRagEscalated(id: Long)
 
     /** Persists the RAG agent's full diagnosis (warning/guideline text plus verdict/threatType/
-     * confidence/suspiciousSignals) for a message — see [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning]. */
+     * confidence/suspiciousSignals/patternMatched/microLesson) for a message — see
+     * [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning]. */
     @Query(
         """
         UPDATE messages
         SET rag_escalated = 1, rag_warning_text = :warning, rag_guideline_text = :guideline,
             rag_verdict = :verdict, rag_threat_type = :threatType, rag_confidence = :confidence,
-            rag_suspicious_signals = :suspiciousSignalsRaw
+            rag_suspicious_signals = :suspiciousSignalsRaw, rag_pattern_matched = :patternMatched,
+            rag_micro_lesson = :microLesson, rag_resolved_destination = :resolvedDestination,
+            rag_domain_age_days = :domainAgeDays, rag_is_pwa_spoofing = :isPwaSpoofing
         WHERE id = :id
     """,
     )
@@ -63,7 +79,44 @@ interface MessageDao {
         threatType: String,
         confidence: Float,
         suspiciousSignalsRaw: String,
+        patternMatched: String,
+        microLesson: String,
+        resolvedDestination: String?,
+        domainAgeDays: Int?,
+        isPwaSpoofing: Boolean,
     )
+
+    // ── Quarantine (adaptive friction) ───────────────────────────────────────
+
+    /** Quarantines a message the moment RAG confirms PHISHING/SCAM, or re-quarantines it for a
+     * fresh cool-down when the user backs out of the friction flow. [untilMillis] is ignored
+     * (stored NULL) when [permanent] is true. */
+    @Query(
+        """
+        UPDATE messages
+        SET is_quarantined = 1,
+            quarantined_until_millis = CASE WHEN :permanent THEN NULL ELSE :untilMillis END,
+            quarantine_permanent = :permanent
+        WHERE id = :id
+    """,
+    )
+    suspend fun setQuarantine(
+        id: Long,
+        untilMillis: Long?,
+        permanent: Boolean,
+    )
+
+    /** Lifts quarantine on every non-permanent entry whose cool-down has elapsed. Called by
+     * [com.sbi.surakshasathi.feature.messagescan.data.worker.QuarantineExpiryWorker]. Returns the
+     * number of rows restored. */
+    @Query(
+        """
+        UPDATE messages
+        SET is_quarantined = 0, quarantined_until_millis = NULL
+        WHERE is_quarantined = 1 AND quarantine_permanent = 0 AND quarantined_until_millis <= :nowMillis
+    """,
+    )
+    suspend fun clearExpiredQuarantines(nowMillis: Long): Int
 
     // ── Retention / bounded table (§8B) ──────────────────────────────────────
 

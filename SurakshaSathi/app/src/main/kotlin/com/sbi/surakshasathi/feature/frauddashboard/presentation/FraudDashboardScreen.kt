@@ -56,7 +56,7 @@ fun FraudDashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Feature Map", fontWeight = FontWeight.Bold) },
+                title = { Text("Heat Map", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
@@ -68,6 +68,25 @@ fun FraudDashboardScreen(
             when (val state = uiState) {
                 is FraudDashboardUiState.Loading ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                is FraudDashboardUiState.Error ->
+                    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "Couldn't load the heat map",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                state.message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Button(onClick = viewModel::refresh) { Text("Retry") }
+                        }
+                    }
                 is FraudDashboardUiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),

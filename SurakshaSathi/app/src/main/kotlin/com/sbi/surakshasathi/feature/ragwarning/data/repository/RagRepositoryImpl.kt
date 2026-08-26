@@ -64,6 +64,8 @@ class RagRepositoryImpl
                             originalMessage = message.body.toPart(),
                             language = prefs.selectedLanguage.toPart(),
                             mlModelMetadata = json.encodeToString(message.toMlModelMetadataDto()).toPart(),
+                            userPersona = prefs.userPersona?.toPart(),
+                            userPhone = prefs.userPhone?.toPart(),
                         ).report
                         .toDomain(messageId = message.id)
                 }

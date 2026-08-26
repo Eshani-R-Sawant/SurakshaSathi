@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 import com.sbi.surakshasathi.core.designsystem.theme.safeColor
+import com.sbi.surakshasathi.core.translation.rememberLocalizedText
 
 /** "Spot the scam" quiz-format lesson (§7c 5.2). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,15 +46,17 @@ fun LessonDetailScreen(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(question.question, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        val questionText by rememberLocalizedText(question.question)
+                        Text(questionText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
                         question.options.forEachIndexed { index, option ->
+                            val optionText by rememberLocalizedText(option)
                             OutlinedButton(
                                 onClick = { viewModel.onAnswerSelected(index) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                             ) {
-                                Text(option, modifier = Modifier.padding(vertical = 8.dp))
+                                Text(optionText, modifier = Modifier.padding(vertical = 8.dp))
                             }
                         }
                     }

@@ -24,6 +24,8 @@ import androidx.navigation.NavController
 import com.sbi.surakshasathi.app.navigation.Screen
 import com.sbi.surakshasathi.core.designsystem.theme.maliciousColor
 import com.sbi.surakshasathi.core.designsystem.theme.warningColor
+import com.sbi.surakshasathi.feature.messagefriction.domain.model.FrictionTrigger
+import com.sbi.surakshasathi.feature.messagescan.domain.usecase.ExtractUrlsUseCase
 
 /**
  * In-app RAG warning card (§4b) — shown when a flagged message is tapped
@@ -228,6 +230,67 @@ fun RagWarningScreen(
                                     state.message.body.ifEmpty { "[Message body purged for security]" },
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
+                            }
+                        }
+
+                        // Adaptive Friction entry points (§ Flow 1c) — the message is never acted
+                        // on directly from this screen; tapping any of these starts the escalating
+                        // Intent Confirmation -> Micro-Education -> Safe Simulation/Guardian flow
+                        // instead. The message itself is already quarantined out of the default
+                        // Alerts list the instant RAG confirmed it dangerous (see
+                        // EscalateFlaggedMessageUseCase) — nothing below can bypass that.
+                        if (state.message.extractedUrls.isNotEmpty()) {
+                            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text(
+                                        "Links found in this message",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    state.message.extractedUrls.forEach { url ->
+                                        val isApk = ExtractUrlsUseCase.isApkDownloadUrl(url)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                url,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                                maxLines = 1,
+                                            )
+                                            OutlinedButton(
+                                                onClick = {
+                                                    val trigger =
+                                                        if (isApk) FrictionTrigger.ApkLinkTap(url) else FrictionTrigger.LinkTap(url)
+                                                    navController.navigate(
+                                                        Screen.IntentConfirmation.createRoute(
+                                                            messageId = state.message.id,
+                                                            triggerTag = FrictionTrigger.tagFor(trigger),
+                                                            url = url,
+                                                        ),
+                                                    )
+                                                },
+                                            ) { Text(if (isApk) "Check app" else "Open safely") }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.IntentConfirmation.createRoute(
+                                            messageId = state.message.id,
+                                            triggerTag = FrictionTrigger.TAG_GENERIC,
+                                            url = null,
+                                        ),
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text("I still want to respond to this message")
                             }
                         }
 

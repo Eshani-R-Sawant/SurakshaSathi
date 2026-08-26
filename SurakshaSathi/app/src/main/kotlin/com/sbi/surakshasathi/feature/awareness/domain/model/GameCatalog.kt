@@ -10,11 +10,6 @@ enum class GameType(val id: String, val title: String, val tagline: String) {
         title = "Cyber Shield Defender",
         tagline = "Drag the right shield onto each incoming attack",
     ),
-    FAKE_APP_DETECTIVE(
-        id = "fake_app_detective",
-        title = "Fake App Detective",
-        tagline = "Spot the genuine app or offer among the lookalikes",
-    ),
     FRAUD_TRAFFIC_CONTROL(
         id = "fraud_traffic_control",
         title = "Fraud Traffic Control",
@@ -46,11 +41,11 @@ enum class GameType(val id: String, val title: String, val tagline: String) {
 object GamePersonaOrdering {
     private val PRIMARY_GAMES: Map<String, List<GameType>> =
         mapOf(
-            "business_owner" to listOf(GameType.FRAUD_TRAFFIC_CONTROL, GameType.SHIELD_DEFENDER, GameType.FAKE_APP_DETECTIVE),
-            "student" to listOf(GameType.FAKE_APP_DETECTIVE, GameType.SHIELD_DEFENDER, GameType.BUBBLE_POP_SCAM),
+            "business_owner" to listOf(GameType.FRAUD_TRAFFIC_CONTROL, GameType.SHIELD_DEFENDER, GameType.BUBBLE_POP_SCAM),
+            "student" to listOf(GameType.SHIELD_DEFENDER, GameType.BUBBLE_POP_SCAM, GameType.FRAUD_TRAFFIC_CONTROL),
             "homemaker" to listOf(GameType.FRAUD_TRAFFIC_CONTROL, GameType.BUBBLE_POP_SCAM, GameType.SHIELD_DEFENDER),
             "senior_citizen" to listOf(GameType.SECURE_PHONE_BUILDER, GameType.BUBBLE_POP_SCAM, GameType.SHIELD_DEFENDER),
-            "salaried_professional" to listOf(GameType.FRAUD_TRAFFIC_CONTROL, GameType.FAKE_APP_DETECTIVE, GameType.SHIELD_DEFENDER),
+            "salaried_professional" to listOf(GameType.FRAUD_TRAFFIC_CONTROL, GameType.SHIELD_DEFENDER, GameType.BUBBLE_POP_SCAM),
         )
 
     fun orderFor(persona: String?): List<GameType> {

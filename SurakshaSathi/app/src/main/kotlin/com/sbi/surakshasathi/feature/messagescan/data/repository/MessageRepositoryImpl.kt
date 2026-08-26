@@ -39,6 +39,9 @@ class MessageRepositoryImpl
         override fun observeFlaggedMessages(): Flow<List<Message>> =
             messageDao.observeFlagged().map { entities -> entities.map { it.toDomain() } }
 
+        override fun observeQuarantinedMessages(): Flow<List<Message>> =
+            messageDao.observeQuarantined().map { entities -> entities.map { it.toDomain() } }
+
         override suspend fun classifyAndStore(raw: RawIncomingMessage): Result<Message> =
             safeCall {
                 // Check for duplicate (dedup by body hash)
@@ -99,6 +102,11 @@ class MessageRepositoryImpl
             threatType: String,
             confidence: Float,
             suspiciousSignals: List<String>,
+            patternMatched: String,
+            microLesson: String,
+            resolvedDestination: String?,
+            domainAgeDays: Int?,
+            isPwaSpoofing: Boolean,
         ): Result<Unit> =
             safeCall {
                 messageDao.saveRagWarning(
@@ -109,7 +117,26 @@ class MessageRepositoryImpl
                     threatType = threatType,
                     confidence = confidence,
                     suspiciousSignalsRaw = suspiciousSignals.joinToString("|"),
+                    patternMatched = patternMatched,
+                    microLesson = microLesson,
+                    resolvedDestination = resolvedDestination,
+                    domainAgeDays = domainAgeDays,
+                    isPwaSpoofing = isPwaSpoofing,
                 )
+            }
+
+        override suspend fun quarantineMessage(
+            messageId: Long,
+            untilMillis: Long?,
+            permanent: Boolean,
+        ): Result<Unit> =
+            safeCall {
+                messageDao.setQuarantine(id = messageId, untilMillis = untilMillis, permanent = permanent)
+            }
+
+        override suspend fun clearExpiredQuarantines(): Result<Int> =
+            safeCall {
+                messageDao.clearExpiredQuarantines(System.currentTimeMillis())
             }
 
         override suspend fun deleteMessagesOlderThan(ttlDays: Long): Result<Int> =

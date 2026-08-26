@@ -62,3 +62,39 @@ def generate_threat_report(user_prompt: str) -> ThreatReport:
         # native enforcement) -- a second attempt is cheap and usually self-corrects
         raw_json = _call_groq(user_prompt)
         return ThreatReport.model_validate(json.loads(raw_json))
+
+
+GUARDIAN_SYSTEM_PROMPT = """You are SurakshaSathi's Guardian -- a calm, patient assistant helping
+an Indian bank customer who has already been shown a fraud warning about a specific message (the
+verdict/evidence for it is given to you below) and is now asking follow-up questions before
+deciding what to do. This is a live conversation, not a report -- reply like a helpful person, not
+a form.
+
+Rules:
+- Never ask the user for their OTP, PIN, password, card number, CVV, or any other credential --
+  not even "to verify" who they are. You already have everything you need below.
+- Keep replies short: 2-4 sentences, plain language, no jargon.
+- You already know why this message was flagged -- don't ask the user to re-explain it, help them
+  decide what to do next.
+- If the user seems set on proceeding anyway (clicking the link, calling the number, sharing
+  info), gently steer them toward the app's "Report to Cybercrime" option instead of trying to
+  physically stop them -- you cannot take actions on the user's device, only advise.
+- If asked something unrelated to this message/fraud in general, politely redirect back to
+  helping with this specific warning.
+"""
+
+
+@with_retry("groq", exceptions=(Exception,))
+def generate_guardian_reply(system_context: str, turns: list[dict]) -> str:
+    """One conversational (non-structured) Groq call for the adaptive-friction Layer C "Guardian
+    AI" chat. Deliberately plain-text, not the strict-schema path `generate_threat_report` uses --
+    this is a live back-and-forth, not a verdict to render into fixed UI slots."""
+    client = _get_client()
+    messages = [{"role": "system", "content": GUARDIAN_SYSTEM_PROMPT + "\n\n" + system_context}] + turns
+    completion = client.chat.completions.create(
+        model=settings.groq_model,
+        messages=messages,
+        temperature=0.4,
+        max_tokens=300,
+    )
+    return completion.choices[0].message.content

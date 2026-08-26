@@ -27,6 +27,11 @@ interface MessageRepository {
      */
     fun observeFlaggedMessages(): Flow<List<Message>>
 
+    /** Observes messages currently in the "Under Review" quarantine holding area (Adaptive
+     * Friction) — deliberately excluded from [observeFlaggedMessages] so they don't sit in the
+     * default Alerts list tempting a repeat tap while quarantined. */
+    fun observeQuarantinedMessages(): Flow<List<Message>>
+
     /**
      * Classifies [raw], persists the resulting [Message], and returns it.
      * Classification is hybrid: on-device TFLite + rule engine.
@@ -58,7 +63,28 @@ interface MessageRepository {
         threatType: String,
         confidence: Float,
         suspiciousSignals: List<String>,
+        patternMatched: String = "",
+        microLesson: String = "",
+        resolvedDestination: String? = null,
+        domainAgeDays: Int? = null,
+        isPwaSpoofing: Boolean = false,
     ): Result<Unit>
+
+    /**
+     * Quarantines [messageId] — real-time out of the default Alerts list into "Under Review"
+     * (Adaptive Friction, see [com.sbi.surakshasathi.feature.messagefriction]). [untilMillis] is
+     * ignored when [permanent] is true (completed all three friction layers — hidden for good,
+     * not just a cool-down).
+     */
+    suspend fun quarantineMessage(
+        messageId: Long,
+        untilMillis: Long?,
+        permanent: Boolean,
+    ): Result<Unit>
+
+    /** Restores every non-permanently-quarantined message whose cool-down has elapsed. Called by
+     * the periodic quarantine-expiry worker. Returns the number of rows restored. */
+    suspend fun clearExpiredQuarantines(): Result<Int>
 
     /**
      * Delete messages older than [ttlDays] days. Called by WorkManager cleanup job.

@@ -78,6 +78,15 @@ class MessageNotificationListenerService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val notification = sbn ?: return
+        if (com.sbi.surakshasathi.BuildConfig.DEBUG) {
+            android.util.Log.d(
+                "MsgListener",
+                "onNotificationPosted pkg=${notification.packageName} id=${notification.id} " +
+                    "tag=${notification.tag} flags=${notification.notification.flags} " +
+                    "category=${notification.notification.category} " +
+                    "groupKey=${notification.notification.group}",
+            )
+        }
         val knownSource = allowedPackages[notification.packageName]
         val source =
             knownSource
@@ -98,19 +107,29 @@ class MessageNotificationListenerService : NotificationListenerService() {
 
         if (body.length < 3) return // Ignore trivially short notifications
 
-        serviceScope.launch {
-            val raw =
-                mapper.map(
-                    body = body,
-                    sender = sender,
-                    source = source,
-                )
-            // Classify, persist, and (if flagged) escalate to RAG + notify
-            processIncomingMessageUseCase(raw)
+        if (com.sbi.surakshasathi.BuildConfig.DEBUG) {
+            android.util.Log.d("MsgListener", "Dispatching to classifier: sender=$sender bodyLen=${body.length}")
+        }
 
-            // If this is an SMS notification, also notify the SMS strategy flow
-            if (source == MessageSource.SMS) {
-                notificationOnlySmsStrategy.onSmsNotificationReceived(body, sender)
+        serviceScope.launch {
+            try {
+                val raw =
+                    mapper.map(
+                        body = body,
+                        sender = sender,
+                        source = source,
+                    )
+                // Classify, persist, and (if flagged) escalate to RAG + notify
+                processIncomingMessageUseCase(raw)
+
+                // If this is an SMS notification, also notify the SMS strategy flow
+                if (source == MessageSource.SMS) {
+                    notificationOnlySmsStrategy.onSmsNotificationReceived(body, sender)
+                }
+            } catch (t: Throwable) {
+                if (com.sbi.surakshasathi.BuildConfig.DEBUG) {
+                    android.util.Log.e("MsgListener", "Processing failed", t)
+                }
             }
         }
     }

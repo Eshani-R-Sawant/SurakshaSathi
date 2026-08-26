@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import com.sbi.surakshasathi.app.navigation.Screen
 import com.sbi.surakshasathi.core.designsystem.theme.BankGold80
 import com.sbi.surakshasathi.core.designsystem.theme.safeColor
+import com.sbi.surakshasathi.core.translation.rememberLocalizedText
 import com.sbi.surakshasathi.feature.awareness.domain.model.Lesson
 
 /** Flow 5 "Learn" tab hub (§7c): scanner entry, lesson list w/ progress, badges, latest nudge. */
@@ -55,24 +56,6 @@ fun AwarenessScreen(
 
             item {
                 Card(
-                    onClick = { navController.navigate(Screen.OfficialLinkScanner.route) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                ) {
-                    Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(36.dp))
-                        Spacer(Modifier.width(16.dp))
-                        Column {
-                            Text("Is this the real Bank app?", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("Scan a QR code or paste a link to verify", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-
-            item {
-                Card(
                     onClick = { navController.navigate(Screen.GameHub.route) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -82,8 +65,10 @@ fun AwarenessScreen(
                         Icon(Icons.Filled.SportsEsports, contentDescription = null, modifier = Modifier.size(36.dp))
                         Spacer(Modifier.width(16.dp))
                         Column {
-                            Text("Play & Learn", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("5 quick games that teach you to spot scams", style = MaterialTheme.typography.bodySmall)
+                            val title by rememberLocalizedText("Play & Learn")
+                            val subtitle by rememberLocalizedText("4 quick games that teach you to spot scams")
+                            Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(subtitle, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -99,8 +84,10 @@ fun AwarenessScreen(
                         Icon(Icons.Filled.MenuBook, contentDescription = null, modifier = Modifier.size(36.dp))
                         Spacer(Modifier.width(16.dp))
                         Column {
-                            Text("Read & Listen: Advisories", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("Cyber-safety guidance you can read or listen to", style = MaterialTheme.typography.bodySmall)
+                            val title by rememberLocalizedText("Read & Listen: Advisories")
+                            val subtitle by rememberLocalizedText("Cyber-safety guidance you can read or listen to")
+                            Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(subtitle, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -113,8 +100,10 @@ fun AwarenessScreen(
                             Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = BankGold80, modifier = Modifier.size(28.dp))
                             Spacer(Modifier.width(12.dp))
                             Column {
-                                Text(nudge.title, fontWeight = FontWeight.SemiBold)
-                                Text(nudge.body, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                                val title by rememberLocalizedText(nudge.title)
+                                val body by rememberLocalizedText(nudge.body)
+                                Text(title, fontWeight = FontWeight.SemiBold)
+                                Text(body, style = MaterialTheme.typography.bodySmall, maxLines = 2)
                             }
                         }
                     }
@@ -136,7 +125,10 @@ fun AwarenessScreen(
                 }
             }
 
-            item { Text("Lessons", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            item {
+                val heading by rememberLocalizedText("Lessons")
+                Text(heading, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
 
             items(uiState.lessons, key = { it.id }) { lesson ->
                 LessonCard(
@@ -165,8 +157,10 @@ private fun LessonCard(
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(lesson.title, fontWeight = FontWeight.SemiBold)
-                Text(lesson.description, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                val title by rememberLocalizedText(lesson.title)
+                val description by rememberLocalizedText(lesson.description)
+                Text(title, fontWeight = FontWeight.SemiBold)
+                Text(description, style = MaterialTheme.typography.bodySmall, maxLines = 2)
             }
         }
     }

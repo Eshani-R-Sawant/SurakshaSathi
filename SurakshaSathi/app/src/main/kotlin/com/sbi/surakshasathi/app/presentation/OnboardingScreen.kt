@@ -34,7 +34,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
             OnboardingPage(
                 icon = Icons.Filled.Shield,
                 title = "Your Bank Guardian",
-                description = "SurakshaSathi detects fake YONO apps, phishing SMS, and WhatsApp scams before they steal your money.",
+                description = "SurakshaSathi detects fake apps from messages and protects you.",
                 iconColor = BankBlue80,
             ),
             OnboardingPage(

@@ -42,6 +42,10 @@ import com.sbi.surakshasathi.feature.ncrpreport.data.local.entity.NcrpReportEnti
  *        card/notification) is available to auto-populate an NCRP report (Flow 4b)
  *   v7 — Phase 7: game_outcomes, advisories, translation_cache tables (Learn tab mini-games,
  *        read/listen advisories, and the Azure Translator cache)
+ *   v8 — Adaptive Friction: messages.rag_pattern_matched / rag_micro_lesson (Layer B education
+ *        content) and messages.is_quarantined / quarantined_until_millis / quarantine_permanent
+ *        (the "Under Review" holding area a flagged message moves into the instant RAG confirms
+ *        it, separate from the default Alerts list)
  *
  * Pre-release: schema bumps use [androidx.room.RoomDatabase.Builder.fallbackToDestructiveMigration]
  * (see DatabaseModule) since there is no shipped user data yet. Replace with
@@ -62,7 +66,7 @@ import com.sbi.surakshasathi.feature.ncrpreport.data.local.entity.NcrpReportEnti
         AdvisoryEntity::class,
         TranslationCacheEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

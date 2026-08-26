@@ -21,12 +21,6 @@ object GameBadges {
                     title = "Shield Defender",
                     description = "Matched the right response to every kind of scam attack.",
                 ),
-            GameType.FAKE_APP_DETECTIVE.id to
-                Reward(
-                    badgeId = "badge_fake_app_detective",
-                    title = "Fake App Detective",
-                    description = "Spotted the genuine app or offer every time.",
-                ),
             GameType.FRAUD_TRAFFIC_CONTROL.id to
                 Reward(
                     badgeId = "badge_traffic_control",

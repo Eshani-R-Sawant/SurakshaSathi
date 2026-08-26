@@ -27,6 +27,8 @@ import com.sbi.surakshasathi.app.presentation.HomeHubScreen
 import com.sbi.surakshasathi.app.presentation.LocaleViewModel
 import com.sbi.surakshasathi.app.presentation.OnboardingScreen
 import com.sbi.surakshasathi.app.presentation.PermissionsScreen
+import com.sbi.surakshasathi.app.presentation.RegistrationScreen
+import com.sbi.surakshasathi.app.presentation.SplashScreen
 import com.sbi.surakshasathi.core.locale.LocaleManager
 import com.sbi.surakshasathi.feature.adaptivefriction.presentation.ConfirmTransferScreen
 import com.sbi.surakshasathi.feature.adaptivefriction.presentation.LivenessCheckScreen
@@ -37,14 +39,17 @@ import com.sbi.surakshasathi.feature.awareness.presentation.AdvisoryListScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.AwarenessScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.BadgesScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.BubblePopScamScreen
-import com.sbi.surakshasathi.feature.awareness.presentation.FakeAppDetectiveScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.FraudTrafficControlScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.GameHubScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.LessonDetailScreen
-import com.sbi.surakshasathi.feature.awareness.presentation.OfficialLinkScannerScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.SecurePhoneBuilderScreen
 import com.sbi.surakshasathi.feature.awareness.presentation.ShieldDefenderScreen
 import com.sbi.surakshasathi.feature.frauddashboard.presentation.FraudDashboardScreen
+import com.sbi.surakshasathi.feature.messagefriction.presentation.IntentConfirmationScreen
+import com.sbi.surakshasathi.feature.messagefriction.presentation.MicroEducationScreen
+import com.sbi.surakshasathi.feature.messagefriction.presentation.ProtectedActionChoiceScreen
+import com.sbi.surakshasathi.feature.messagefriction.presentation.guardian.GuardianChatScreen
+import com.sbi.surakshasathi.feature.messagefriction.presentation.safesimulation.SafeSimulationScreen
 import com.sbi.surakshasathi.feature.messagescan.presentation.MessageDetailScreen
 import com.sbi.surakshasathi.feature.ncrpreport.presentation.NcrpReportScreen
 import com.sbi.surakshasathi.feature.ragwarning.presentation.RagWarningScreen
@@ -96,7 +101,10 @@ private fun bottomNavItems() =
  * Root navigation host for SurakshaSathi.
  *
  * Structure:
- * - Onboarding flow (splash → onboarding → permissions) — no bottom nav
+ * - [Screen.Splash] is always the start destination — a lightweight gate that reads
+ *   `UserPreferencesDataStore.registrationComplete` and routes straight to Home for a returning
+ *   user, or into the first-run flow (onboarding → permissions → registration) otherwise. This is
+ *   the only screen that runs on every cold start; everything after it runs at most once.
  * - Main app with 4-tab bottom navigation (Home | Alerts | Dashboard | Learn)
  * - Feature screens launched on top of the main shell
  */
@@ -154,7 +162,7 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Onboarding.route,
+            startDestination = Screen.Splash.route,
             modifier = Modifier.padding(paddingValues),
             enterTransition = {
                 fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 4 }
@@ -169,7 +177,10 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
                 fadeOut(tween(220)) + slideOutHorizontally(tween(220)) { it / 4 }
             },
         ) {
-            // ── Onboarding ──────────────────────────────────────────────────────
+            // ── Onboarding / first-run only ────────────────────────────────────
+            composable(Screen.Splash.route) {
+                SplashScreen(navController = navController)
+            }
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
                     onComplete = {
@@ -182,8 +193,17 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
             composable(Screen.Permissions.route) {
                 PermissionsScreen(
                     onComplete = {
-                        navController.navigate(Screen.Home.route) {
+                        navController.navigate(Screen.Registration.route) {
                             popUpTo(Screen.Permissions.route) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable(Screen.Registration.route) {
+                RegistrationScreen(
+                    onComplete = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Registration.route) { inclusive = true }
                         }
                     },
                 )
@@ -214,6 +234,58 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
             ) {
                 RagWarningScreen(navController = navController)
             }
+
+            // ── Flow 1c: Message-Triggered Adaptive Friction (feature/messagefriction) ──────────
+            composable(
+                route = Screen.IntentConfirmation.route,
+                arguments =
+                    listOf(
+                        navArgument("messageId") { type = NavType.StringType },
+                        navArgument("triggerTag") { type = NavType.StringType },
+                        navArgument("url") { type = NavType.StringType; defaultValue = ""; nullable = false },
+                    ),
+            ) {
+                IntentConfirmationScreen(navController = navController)
+            }
+            composable(
+                route = Screen.MicroEducation.route,
+                arguments =
+                    listOf(
+                        navArgument("messageId") { type = NavType.StringType },
+                        navArgument("triggerTag") { type = NavType.StringType },
+                        navArgument("url") { type = NavType.StringType; defaultValue = ""; nullable = false },
+                    ),
+            ) {
+                MicroEducationScreen(navController = navController)
+            }
+            composable(
+                route = Screen.ProtectedActionChoice.route,
+                arguments =
+                    listOf(
+                        navArgument("messageId") { type = NavType.StringType },
+                        navArgument("triggerTag") { type = NavType.StringType },
+                        navArgument("url") { type = NavType.StringType; defaultValue = ""; nullable = false },
+                    ),
+            ) {
+                ProtectedActionChoiceScreen(navController = navController)
+            }
+            composable(
+                route = Screen.SafeSimulation.route,
+                arguments =
+                    listOf(
+                        navArgument("messageId") { type = NavType.StringType },
+                        navArgument("url") { type = NavType.StringType; defaultValue = ""; nullable = false },
+                    ),
+            ) {
+                SafeSimulationScreen(navController = navController)
+            }
+            composable(
+                route = Screen.GuardianChat.route,
+                arguments = listOf(navArgument("messageId") { type = NavType.StringType }),
+            ) {
+                GuardianChatScreen(navController = navController)
+            }
+
             composable(Screen.ApkScan.route) {
                 ApkScanScreen(navController = navController)
             }
@@ -241,9 +313,6 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
             ) {
                 NcrpReportScreen(navController = navController)
             }
-            composable(Screen.OfficialLinkScanner.route) {
-                OfficialLinkScannerScreen(navController = navController)
-            }
             composable(
                 route = Screen.LessonDetail.route,
                 arguments = listOf(navArgument("lessonId") { type = NavType.StringType }),
@@ -257,9 +326,6 @@ fun SurakshaSathiNavHost(navController: NavHostController = rememberNavControlle
             // ── Flow 7: Games & Advisories ───────────────────────────────────────
             composable(Screen.SecurePhoneBuilderGame.route) {
                 SecurePhoneBuilderScreen(navController = navController)
-            }
-            composable(Screen.FakeAppDetectiveGame.route) {
-                FakeAppDetectiveScreen(navController = navController)
             }
             composable(Screen.FraudTrafficControlGame.route) {
                 FraudTrafficControlScreen(navController = navController)

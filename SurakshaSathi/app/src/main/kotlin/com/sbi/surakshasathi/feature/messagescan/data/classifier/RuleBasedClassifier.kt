@@ -77,8 +77,19 @@ class RuleBasedClassifier
                         (text.contains("account") || text.contains("acc")) &&
                             (text.contains("block") || text.contains("suspend") || text.contains("freeze"))
                     },
+                    // OTP_REQUEST: fires only when the message is ASKING the user to share an OTP —
+                    // NOT when a legitimate bank is warning "do not share your OTP with anyone".
+                    // The original rule matched "share" + "otp" unconditionally, causing every
+                    // real bank OTP message (which always includes the anti-fraud warning
+                    // "Do not share this OTP with anyone") to score as a phishing attempt.
                     MessageRule("OTP_REQUEST", weight = 0.35f) { text, _, _, _, _ ->
-                        text.contains("share") && (text.contains("otp") || text.contains("one time password"))
+                        (text.contains("otp") || text.contains("one time password")) &&
+                            (text.contains("share") || text.contains("send") ||
+                                text.contains("enter") || text.contains("provide")) &&
+                            // Negative guard: legitimate banks always include a warning — don't penalise them
+                            !text.contains("do not share") && !text.contains("don't share") &&
+                            !text.contains("never share") && !text.contains("not share") &&
+                            !text.contains("do not provide") && !text.contains("never provide")
                     },
                     MessageRule("MPIN_REQUEST", weight = 0.40f) { text, _, _, _, _ ->
                         text.contains("share") && text.contains("mpin")

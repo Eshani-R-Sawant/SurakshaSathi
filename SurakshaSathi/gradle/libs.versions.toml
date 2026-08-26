@@ -44,12 +44,12 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 loggingInterceptor = "4.12.0"
 
-# PyTorch Mobile (on-device spam classifier) — see feature/messagescan/data/classifier's
-# PyTorchSpamClassifier for why this is used instead of TensorFlow Lite: the project's
-# PyTorch->TFLite export toolchain (litert-torch) ships no Windows build and produced a
-# non-discriminative model even where it did build, so the real trained weights are shipped via
-# PyTorch's own official mobile export path instead.
-pytorchMobile = "1.13.1"
+# TensorFlow Lite (on-device spam classifier) — see feature/messagescan/data/classifier's
+# TFLiteSpamClassifier. PyTorch Mobile was tried first but its 1.13.1 runtime doesn't implement
+# aten::scaled_dot_product_attention, an op the exported model's traced graph requires, so the
+# model could never load. The FP32 TFLite export (verified independently via ai_edge_litert against
+# real spam/ham test cases: 9% vs 92%+ with clean separation) has no such incompatibility.
+tensorflowLite = "2.17.0"
 
 # ML Kit
 mlkitFaceDetection = "16.1.7"
@@ -156,7 +156,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
 
 # PyTorch Mobile
-pytorch-mobile-lite = { group = "org.pytorch", name = "pytorch_android_lite", version.ref = "pytorchMobile" }
+tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflowLite" }
 
 # ML Kit
 mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }

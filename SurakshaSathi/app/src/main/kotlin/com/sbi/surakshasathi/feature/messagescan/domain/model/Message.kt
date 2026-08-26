@@ -70,4 +70,26 @@ data class Message(
     /** RAG agent's confidence in its verdict, 0.0-1.0, if escalated. */
     val ragConfidence: Float? = null,
     val ragSuspiciousSignals: List<String> = emptyList(),
+    /** RAG's fraud-pattern label + the 1-1.5 paragraph micro-education text (adaptive friction
+     * Layer B), if escalated — see [com.sbi.surakshasathi.feature.ragwarning.domain.model.RagWarning]. */
+    val ragPatternMatched: String? = null,
+    val ragMicroLesson: String? = null,
+    /** Domain-safety signals for the message's first URL, if any — powers the Adaptive Friction
+     * Safe Simulation screen's "fake domain / lookalike app" banner without a second network call
+     * (already computed during the original RAG scan). Null when there was no URL to analyze. */
+    val ragResolvedDestination: String? = null,
+    val ragDomainAgeDays: Int? = null,
+    val ragIsPwaSpoofing: Boolean = false,
+    /** True the moment the RAG agent confirms PHISHING/SCAM — set independently of whether the
+     * user ever opens the warning screen, so the message disappears from the default Alerts list
+     * (see [com.sbi.surakshasathi.feature.messagescan.domain.repository.MessageRepository.observeFlaggedMessages])
+     * the instant it's known to be dangerous, not only after the user engages with it. */
+    val isQuarantined: Boolean = false,
+    /** Epoch millis after which quarantine auto-lifts (the "6-7 hour cool-down" the user backed
+     * out to). Null while [quarantinePermanent] is true — a permanent quarantine has no expiry. */
+    val quarantinedUntilMillis: Long? = null,
+    /** True once the user has completed all three adaptive-friction layers — from that point the
+     * raw message is hidden from the default list permanently; the user only ever interacts with
+     * it through the Safe Simulation / Guardian AI experience from then on. */
+    val quarantinePermanent: Boolean = false,
 )

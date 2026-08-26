@@ -43,7 +43,6 @@ import com.sbi.surakshasathi.feature.awareness.domain.model.GameType
 data class GameTheme(val gradientStart: Color, val gradientEnd: Color, val accent: Color)
 
 private val SHIELD_DEFENDER_THEME = GameTheme(ArcadeElectricBlue, ArcadeNeonCyan, ArcadeElectricBlue)
-private val FAKE_APP_DETECTIVE_THEME = GameTheme(ArcadeVividPurple, ArcadeHotPink, ArcadeVividPurple)
 private val FRAUD_TRAFFIC_CONTROL_THEME = GameTheme(ArcadeSunsetOrange, ArcadeLimeGreen, ArcadeSunsetOrange)
 private val BUBBLE_POP_SCAM_THEME = GameTheme(ArcadeTeal, ArcadeGoldYellow, ArcadeTeal)
 private val SECURE_PHONE_BUILDER_THEME = GameTheme(ArcadeIndigo, ArcadeSkyBlue, ArcadeIndigo)
@@ -51,7 +50,6 @@ private val SECURE_PHONE_BUILDER_THEME = GameTheme(ArcadeIndigo, ArcadeSkyBlue, 
 fun GameType.theme(): GameTheme =
     when (this) {
         GameType.SHIELD_DEFENDER -> SHIELD_DEFENDER_THEME
-        GameType.FAKE_APP_DETECTIVE -> FAKE_APP_DETECTIVE_THEME
         GameType.FRAUD_TRAFFIC_CONTROL -> FRAUD_TRAFFIC_CONTROL_THEME
         GameType.BUBBLE_POP_SCAM -> BUBBLE_POP_SCAM_THEME
         GameType.SECURE_PHONE_BUILDER -> SECURE_PHONE_BUILDER_THEME

@@ -69,6 +69,11 @@ sealed interface FraudDashboardUiState {
         val windowLabel: String,
         val entries: List<RegionHeatmapEntry>,
     ) : FraudDashboardUiState
+
+    /** Distinct from `Success(entries = emptyList())` — a real load failure (network/API error),
+     * not "no fraud reports in this window." Shown with a retry affordance so it's never
+     * silently indistinguishable from a genuinely quiet region. */
+    data class Error(val message: String) : FraudDashboardUiState
 }
 
 sealed interface CampaignSheetState {
@@ -139,7 +144,9 @@ class FraudDashboardViewModel
                 when (val result = loadFraudHeatmapUseCase(window.windowDays, window.month, _selectedRegion.value)) {
                     is Result.Success ->
                         _uiState.value = FraudDashboardUiState.Success(result.data.first, result.data.second)
-                    is Result.Error -> _uiState.value = FraudDashboardUiState.Success(window.label, emptyList())
+                    is Result.Error ->
+                        _uiState.value =
+                            FraudDashboardUiState.Error(result.error.message ?: "Failed to load fraud heatmap")
                     is Result.Loading -> Unit
                 }
             }

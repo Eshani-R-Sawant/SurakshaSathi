@@ -68,6 +68,8 @@ class UserMap(Base):
     phone_number = Column(String, nullable=True, index=True)  # indexed: dedup key for db/seed/seed_blue_db.py::seed_users
     region = Column(String, nullable=True)
     persona = Column(String, nullable=True)  # see clustering/persona.py for the fixed category set
+    email = Column(String, nullable=True)  # collected on the Android app's Registration screen
+    preferred_language = Column(String, nullable=True)  # BCP-47-ish tag: en, hi, mr, ta, ...
     lat = Column(Float, nullable=True)
     lon = Column(Float, nullable=True)
     is_vulnerable_group = Column(Boolean, default=False)

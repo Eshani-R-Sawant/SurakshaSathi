@@ -13,6 +13,14 @@ class Settings(BaseSettings):
     postgres_dsn: str = ""          # postgresql://user:pass@/dbname?host=/cloudsql/<instance-conn-name>
     pgvector_dim: int = 96          # must match clustering.embedding's reduced dim (text + region + persona + message_type)
 
+    # Optional: point the `user_map` table (api/routes/user_registration.py) at a physically
+    # separate database instance -- e.g. a dedicated Azure Database for PostgreSQL, if the user
+    # records need to live outside GCP for organizational reasons. Empty by default, in which case
+    # registration falls back to writing into the same `postgres_dsn` instance as everything else
+    # (see _get_users_session_factory in that route module) -- no second instance is required for
+    # the feature to work end-to-end.
+    users_db_dsn: str = ""
+
     # Cache / bloom filter -- Memorystore for Redis (GCP-native managed Redis)
     redis_url: str = ""
 

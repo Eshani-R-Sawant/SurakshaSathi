@@ -25,6 +25,7 @@ import com.sbi.surakshasathi.feature.messagescan.domain.model.MessageSource
         Index(value = ["received_at_millis"]),
         Index(value = ["classification"]),
         Index(value = ["body_hash"], unique = true),
+        Index(value = ["is_quarantined"]),
     ],
 )
 data class MessageEntity(
@@ -67,6 +68,22 @@ data class MessageEntity(
     /** Pipe-separated, same convention as [extractedUrlsRaw]. */
     @ColumnInfo(name = "rag_suspicious_signals")
     val ragSuspiciousSignalsRaw: String = "",
+    @ColumnInfo(name = "rag_pattern_matched")
+    val ragPatternMatched: String? = null,
+    @ColumnInfo(name = "rag_micro_lesson")
+    val ragMicroLesson: String? = null,
+    @ColumnInfo(name = "rag_resolved_destination")
+    val ragResolvedDestination: String? = null,
+    @ColumnInfo(name = "rag_domain_age_days")
+    val ragDomainAgeDays: Int? = null,
+    @ColumnInfo(name = "rag_is_pwa_spoofing", defaultValue = "0")
+    val ragIsPwaSpoofing: Boolean = false,
+    @ColumnInfo(name = "is_quarantined", defaultValue = "0")
+    val isQuarantined: Boolean = false,
+    @ColumnInfo(name = "quarantined_until_millis")
+    val quarantinedUntilMillis: Long? = null,
+    @ColumnInfo(name = "quarantine_permanent", defaultValue = "0")
+    val quarantinePermanent: Boolean = false,
 ) {
     fun toDomain(): Message =
         Message(
@@ -100,6 +117,14 @@ data class MessageEntity(
                 } else {
                     ragSuspiciousSignalsRaw.split("|").filter { it.isNotBlank() }
                 },
+            ragPatternMatched = ragPatternMatched,
+            ragMicroLesson = ragMicroLesson,
+            ragResolvedDestination = ragResolvedDestination,
+            ragDomainAgeDays = ragDomainAgeDays,
+            ragIsPwaSpoofing = ragIsPwaSpoofing,
+            isQuarantined = isQuarantined,
+            quarantinedUntilMillis = quarantinedUntilMillis,
+            quarantinePermanent = quarantinePermanent,
         )
 
     companion object {
@@ -123,6 +148,14 @@ data class MessageEntity(
                 ragThreatType = m.ragThreatType,
                 ragConfidence = m.ragConfidence,
                 ragSuspiciousSignalsRaw = m.ragSuspiciousSignals.joinToString("|"),
+                ragPatternMatched = m.ragPatternMatched,
+                ragMicroLesson = m.ragMicroLesson,
+                ragResolvedDestination = m.ragResolvedDestination,
+                ragDomainAgeDays = m.ragDomainAgeDays,
+                ragIsPwaSpoofing = m.ragIsPwaSpoofing,
+                isQuarantined = m.isQuarantined,
+                quarantinedUntilMillis = m.quarantinedUntilMillis,
+                quarantinePermanent = m.quarantinePermanent,
             )
     }
 }

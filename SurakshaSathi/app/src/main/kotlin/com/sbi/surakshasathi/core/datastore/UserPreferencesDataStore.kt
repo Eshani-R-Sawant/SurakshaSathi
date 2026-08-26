@@ -50,6 +50,9 @@ class UserPreferencesDataStore
             val FRAUD_HEATMAP_LAST_SYNC = longPreferencesKey("fraud_heatmap_last_sync")
             val USER_REGION = stringPreferencesKey("user_region")
             val USER_PERSONA = stringPreferencesKey("user_persona")
+            val USER_PHONE = stringPreferencesKey("user_phone")
+            val USER_EMAIL = stringPreferencesKey("user_email")
+            val REGISTRATION_COMPLETE = booleanPreferencesKey("registration_complete")
             val SEEN_REGIONAL_ALERT_IDS = stringSetPreferencesKey("seen_regional_alert_ids")
             val REPORTER_NAME = stringPreferencesKey("reporter_name")
             val REPORTER_PHONE = stringPreferencesKey("reporter_phone")
@@ -82,6 +85,9 @@ class UserPreferencesDataStore
                         fraudHeatmapLastSyncMs = prefs[Keys.FRAUD_HEATMAP_LAST_SYNC] ?: 0L,
                         userRegion = prefs[Keys.USER_REGION],
                         userPersona = prefs[Keys.USER_PERSONA],
+                        userPhone = prefs[Keys.USER_PHONE],
+                        userEmail = prefs[Keys.USER_EMAIL],
+                        registrationComplete = prefs[Keys.REGISTRATION_COMPLETE] ?: false,
                         reporterName = prefs[Keys.REPORTER_NAME],
                         reporterPhone = prefs[Keys.REPORTER_PHONE],
                         reporterEmail = prefs[Keys.REPORTER_EMAIL],
@@ -118,6 +124,29 @@ class UserPreferencesDataStore
 
         /** Set once via the persona picker — see [com.sbi.surakshasathi.core.common.Personas]. */
         suspend fun setUserPersona(persona: String) = dataStore.edit { it[Keys.USER_PERSONA] = persona }
+
+        /**
+         * Records the one-time account-creation form (phone/email/persona/language) and marks
+         * registration complete, which is the sole gate [com.sbi.surakshasathi.app.presentation.SplashScreen]
+         * checks to decide whether a launch goes straight to Home or into the first-run flow
+         * (onboarding → permissions → registration). Called once, from
+         * [com.sbi.surakshasathi.app.presentation.RegistrationViewModel], regardless of whether the
+         * best-effort backend sync in that same call succeeded — the account exists on this device
+         * either way, and a failed sync retries silently on the next app open rather than blocking
+         * the user from ever reaching Home.
+         */
+        suspend fun completeRegistration(
+            phone: String,
+            email: String,
+            persona: String,
+            language: String,
+        ) = dataStore.edit { prefs ->
+            prefs[Keys.USER_PHONE] = phone
+            prefs[Keys.USER_EMAIL] = email
+            prefs[Keys.USER_PERSONA] = persona
+            prefs[Keys.SELECTED_LANGUAGE] = language
+            prefs[Keys.REGISTRATION_COMPLETE] = true
+        }
 
         /**
          * Remembers the complainant details entered on a manual NCRP report so future reports
@@ -182,6 +211,14 @@ data class UserPreferences(
     val userRegion: String?,
     /** User-declared demographic category — null until the persona picker has been completed. */
     val userPersona: String?,
+    /** Registered phone number — null until the Registration screen has been completed. */
+    val userPhone: String?,
+    /** Registered email address — null until the Registration screen has been completed. */
+    val userEmail: String?,
+    /** True once the one-time Registration screen (phone/email/persona/language) has been
+     * completed — the sole gate [com.sbi.surakshasathi.app.presentation.SplashScreen] checks to
+     * skip onboarding/permissions/registration on every launch after the first. */
+    val registrationComplete: Boolean,
     /** Remembered complainant details for NCRP reports — null until first entered manually. */
     val reporterName: String?,
     val reporterPhone: String?,

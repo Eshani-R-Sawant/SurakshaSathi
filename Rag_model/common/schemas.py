@@ -84,6 +84,10 @@ class UserMapRecord(BaseModel):
     # for the redaction discipline applied to free-text fields elsewhere in this service).
     region: Optional[str] = None
     persona: Optional[str] = None  # see clustering/persona.py for the fixed category set
+    # Collected on the Android app's Registration screen (api/routes/user_registration.py) --
+    # optional because synthetic/seeded rows (db/seed/seed_blue_db.py) never had these.
+    email: Optional[str] = None
+    preferred_language: Optional[str] = None  # BCP-47-ish tag: en, hi, mr, ta, ...
     lat: Optional[float] = None
     lon: Optional[float] = None
     is_vulnerable_group: bool = False
@@ -129,6 +133,13 @@ class TechnicalEvidence(BaseModel):
     domain_creation_age: Optional[str] = None
     quishing_anomaly_detected: bool = False
     callback_number_verified: bool = False
+    # Populated from url_qr_callback_engine.url_pipeline.analyze_url's UrlAnalysisResult, which
+    # already computes these -- previously dropped on the floor before reaching this schema, so
+    # the Android client's "safe simulation" sandbox had no fake-domain/lookalike-app signal to
+    # show even though the backend had already done the work.
+    domain_age_days: Optional[int] = None
+    is_pwa: bool = False
+    pwa_name_spoofing_suspected: bool = False
 
 
 class ThreatReport(BaseModel):
@@ -139,6 +150,16 @@ class ThreatReport(BaseModel):
     technical_evidence: TechnicalEvidence
     plain_language_explanation: str
     recommended_action: str
+    # Short label naming the specific fraud pattern matched (e.g. "fake KYC-block urgency +
+    # non-bank link"), grounded in the retrieved guideline docs -- drives the adaptive friction
+    # engine's Layer B micro-education screen title.
+    pattern_matched: str = ""
+    # The Layer B micro-education body: a real 1-1.5 paragraph explanation (which pattern this
+    # is, why it works on people, a verified counter-fact, what to do instead), NOT a one-liner --
+    # generated in this same call/schema so the friction engine's education step costs zero
+    # additional LLM round trips. See llm/prompt_templates.SYSTEM_PROMPT for the length/grounding
+    # instruction.
+    micro_lesson: str = ""
     # BCP-47-ish tag (hi, mr, ta, en, ...) the two fields above are actually written in --
     # the LLM is instructed (see llm/prompt_templates.build_per_message_prompt) to localize
     # plain_language_explanation/recommended_action into this language, not just detect it.

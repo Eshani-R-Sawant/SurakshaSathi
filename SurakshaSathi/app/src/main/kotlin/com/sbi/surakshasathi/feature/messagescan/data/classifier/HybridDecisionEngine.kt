@@ -6,7 +6,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Hybrid Decision Engine — combines [PyTorchSpamClassifier] and [RuleBasedClassifier]
+ * Hybrid Decision Engine — combines [TFLiteSpamClassifier] and [RuleBasedClassifier]
  * to produce the final [MessageClassification] + riskScore.
  *
  * Decision logic:
@@ -18,9 +18,11 @@ import javax.inject.Singleton
  *   >= SUSPICIOUS_THRESHOLD → MALICIOUS (immediate alert + RAG + NCRP offer)
  *
  * Design decisions:
- * - Rules still carry more weight than ML: [PyTorchSpamClassifier]'s auxiliary-feature input is
- *   zero-filled (see its class doc), which costs it some of its own trained calibration headroom,
- *   so the deterministic rule engine remains the steadier of the two signals for now.
+ * - Rules still carry more weight than ML: [TFLiteSpamClassifier] now feeds the model a real
+ *   dims-0-33 auxiliary feature vector (see [com.sbi.surakshasathi.feature.messagescan.data.classifier.feature.FeatureExtractor]
+ *   and [com.sbi.surakshasathi.feature.messagescan.data.classifier.feature.UrlIntelligenceStage2]),
+ *   but dims 34-38 (Stage 3 live-HTTP URL analysis) are still deferred, so the deterministic
+ *   rule engine remains the steadier of the two signals for now.
  * - Either classifier alone can push the score above the MALICIOUS threshold
  *   (e.g. APK download URL = 0.40 rule score → SUSPICIOUS even with ML = 0).
  *
@@ -32,7 +34,7 @@ import javax.inject.Singleton
 class HybridDecisionEngine
     @Inject
     constructor(
-        private val mlClassifier: PyTorchSpamClassifier,
+        private val mlClassifier: TFLiteSpamClassifier,
         private val ruleClassifier: RuleBasedClassifier,
     ) {
         data class Decision(
@@ -55,7 +57,7 @@ class HybridDecisionEngine
             sender: String?,
             source: MessageSource? = null,
         ): Decision {
-            val mlScore = mlClassifier.classify(text)
+            val mlScore = mlClassifier.classifyWithSender(text, sender)
             val ruleScore = ruleClassifier.classifyWithSender(text, sender, source)
 
             val combined = (ML_WEIGHT * mlScore) + (RULE_WEIGHT * ruleScore)

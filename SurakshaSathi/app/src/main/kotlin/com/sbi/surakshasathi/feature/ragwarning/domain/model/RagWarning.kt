@@ -53,4 +53,23 @@ data class RagWarning(
     val suspiciousSignals: List<String> = emptyList(),
     /** True if this warning was produced by the offline fallback, not the live agent. */
     val isOfflineFallback: Boolean = false,
+    /** Short label naming the specific fraud pattern matched — Adaptive Friction Layer B title. */
+    val patternMatched: String = "",
+    /** The 1-1.5 paragraph micro-education body — Adaptive Friction Layer B content. Generated in
+     * the same backend call as everything else above, not a second round trip. */
+    val microLesson: String = "",
+    /** Domain-safety signals for the message's first URL (if any), used by the Adaptive Friction
+     * Safe Simulation screen's "fake domain / lookalike app" banner. Backend already computes
+     * this during the original scan (url_pipeline.analyze_url) — previously discarded before
+     * reaching the client. Null when the message had no URL to analyze. */
+    val technicalEvidence: RagTechnicalEvidence? = null,
+)
+
+data class RagTechnicalEvidence(
+    val resolvedDestination: String? = null,
+    val domainAgeDays: Int? = null,
+    val isPwa: Boolean = false,
+    val pwaNameSpoofingSuspected: Boolean = false,
+    val quishingAnomalyDetected: Boolean = false,
+    val callbackNumberVerified: Boolean = false,
 )
