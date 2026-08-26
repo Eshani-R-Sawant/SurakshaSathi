@@ -43,41 +43,7 @@ Fraudsters routinely circulate fake banking APKs and malicious URLs via SMS, Wha
 
 ## 🏗️ End-to-End System Architecture
 
-```mermaid
-flowchart TD
-    subgraph MobileDevice ["📱 Android Client (SurakshaSathi)"]
-        Ingestion["SMS / WhatsApp / Telegram Ingestion"]
-        OnDeviceML["Hybrid Classifier (Rules + TFLite)"]
-        Friction["Adaptive Friction (Biometrics & ML Kit Liveness)"]
-        LocalDB[("SQLCipher Encrypted Room DB")]
-        
-        Ingestion --> OnDeviceML
-        OnDeviceML -->|High Risk| Friction
-        OnDeviceML --> LocalDB
-    end
-
-    subgraph BackendServices ["🧠 RAG & Microservice Platform (Rag_model)"]
-        API["FastAPI Gateway (/rag/analyze, /threat/apk, /i4c/ncrp)"]
-        PII["Presidio PII Redaction Engine"]
-        Groq["Groq LLM Pipeline (Llama 3.3 70B)"]
-        VectorDB[("PostgreSQL + pgvector (Guidelines & Threat Intel)")]
-        RedisCache[("Redis Bloom Filter & Hot Cache")]
-
-        API --> PII
-        PII --> Groq
-        Groq <--> VectorDB
-        API <--> RedisCache
-    end
-
-    subgraph MLPipeline ["🤖 ML Training & Feature Extractor (sms_spam_detector_v2)"]
-        Trainer["PyTorch / XGBoost Model Trainer"]
-        Exporter["TFLite & Keyword JSON Exporter"]
-        Trainer --> Exporter
-    end
-
-    MobileDevice <-->|REST API / Retrofit + TLS| BackendServices
-    Exporter -.->|Deploy Assets| MobileDevice
-```
+<img width="950" height="456" alt="image" src="https://github.com/user-attachments/assets/1a29ea73-c232-4dbb-b1b5-03930bfea2bb" />
 
 ---
 
