@@ -1,25 +1,25 @@
-# 🛡️ SurakshaSathi (सुरक्षा साथी)
+#  SurakshaSathi (सुरक्षा साथी)
 
 
 > **SurakshaSathi** ("Security Companion") is an end-to-end, production-grade mobile security and cybercrime prevention platform designed for digital banking customers. It protects users against fake mobile banking applications (e.g. spoofed YONO SBI apps), SMS/WhatsApp/Telegram phishing, credential/OTP theft, malicious APKs, and fraudulent transaction prompts.
 
 ---
 
-## 📑 Table of Contents
+##  Table of Contents
 
-- [🌟 System Overview](#-system-overview)
-- [🏗️ End-to-End System Architecture](#️-end-to-end-system-architecture)
-- [🧩 Repository Modules](#-repository-modules)
-- [✨ Key Platform Capabilities](#-key-platform-capabilities)
-- [⚙️ Prerequisites](#️-prerequisites)
-- [🚀 Comprehensive Developer Setup](#-comprehensive-developer-setup)
+- [System Overview](#-system-overview)
+- [End-to-End System Architecture](#️-end-to-end-system-architecture)
+- [Repository Modules](#-repository-modules)
+- [Key Platform Capabilities](#-key-platform-capabilities)
+- [Prerequisites](#️-prerequisites)
+- [Comprehensive Developer Setup](#-comprehensive-developer-setup)
   - [1. Backend Setup (`Rag_model`)](#1-backend-setup-rag_model)
   - [2. ML Spam Detector Setup (`sms_spam_detector_v2`)](#2-ml-spam-detector-setup-sms_spam_detector_v2)
   - [3. Android Client Setup (`SurakshaSathi`)](#3-android-client-setup-surakshasathi)
-- [🔐 Environment Variables & Config Guide](#-environment-variables--config-guide)
-- [🛡️ Security, Privacy & DPDP Compliance](#️-security-privacy--dpdp-compliance)
-- [🧪 Testing & Quality Assurance](#-testing--quality-assurance)
-- [🤝 Contributing & License](#-contributing--license)
+- [Environment Variables & Config Guide](#-environment-variables--config-guide)
+- [Security, Privacy & DPDP Compliance](#️-security-privacy--dpdp-compliance)
+- [Testing & Quality Assurance](#-testing--quality-assurance)
+- [Contributing & License](#-contributing--license)
 
 ---
 
@@ -35,36 +35,36 @@ Fraudsters routinely circulate fake banking APKs and malicious URLs via SMS, Wha
 
 ---
 
-## 🏗️ End-to-End System Architecture
+## End-to-End System Architecture
 
 <img width="950" height="456" alt="image" src="https://github.com/user-attachments/assets/1a29ea73-c232-4dbb-b1b5-03930bfea2bb" />
 
 ---
 
-## 🧩 Repository Modules
+##  Repository Modules
 
 This repository is structured as a monorepo containing all core components of the SurakshaSathi ecosystem:
 
 | Directory | Module Description | Technical Stack | Documentation |
 |---|---|---|---|
-| 📱 [`SurakshaSathi/`](SurakshaSathi/) | Production Android Client Application | Kotlin 2.0, Jetpack Compose, Hilt, Room, SQLCipher, TFLite | [Android README](SurakshaSathi/README.md) |
-| 🧠 [`Rag_model/`](Rag_model/) | RAG AI Backend, Threat Intel & REST API | Python 3.11, FastAPI, Groq LLM, pgvector, Redis, Presidio | [Backend README](Rag_model/README.md) |
-| 🤖 [`sms_spam_detector_v2/`](sms_spam_detector_v2/) | ML Model Training & Feature Extraction Scripts | Python, PyTorch, Scikit-Learn, TFLite Converter | [ML README](sms_spam_detector_v2/README.md) |
+|  [`SurakshaSathi/`](SurakshaSathi/) | Production Android Client Application | Kotlin 2.0, Jetpack Compose, Hilt, Room, SQLCipher, TFLite | [Android README](SurakshaSathi/README.md) |
+|  [`Rag_model/`](Rag_model/) | RAG AI Backend, Threat Intel & REST API | Python 3.11, FastAPI, Groq LLM, pgvector, Redis, Presidio | [Backend README](Rag_model/README.md) |
+| [`sms_spam_detector_v2/`](sms_spam_detector_v2/) | ML Model Training & Feature Extraction Scripts | Python, PyTorch, Scikit-Learn, TFLite Converter | [ML README](sms_spam_detector_v2/README.md) |
 
 ---
 
-## ✨ Key Platform Capabilities
+##  Key Platform Capabilities
 
-- 🔍 **Multi-Channel Message Ingestion**: Captures SMS notifications (via default SMS handler or notification listener) and OTT app messages (WhatsApp, Telegram).
-- ⚡ **Sub-Second On-Device Inference**: Runs TFLite spam model and TRAI DLT header validation without requiring network latency for initial triage.
-- 🗣️ **Localized Persona-Based Guidelines**: RAG agent generates clear advice tailored for Farmers, Students, Seniors, or General Banking customers in English, Hindi, Marathi, Tamil, etc.
-- 🛡️ **Zero-Trust APK Verification**: Validates application package certificates against official bank allowlists; flags side-loaded counterfeit banking apps.
-- ✋ **Adaptive Intent Friction**: Intercepts high-risk user prompts with hold-to-confirm timers, biometric challenges, and facial liveness verification.
-- 🗺️ **Fraud Geo-Dashboard & FCM Segment Alerts**: Visualizes active fraud campaigns on interactive maps and dispatches targeted push notifications to affected regions.
+-  **Multi-Channel Message Ingestion**: Captures SMS notifications (via default SMS handler or notification listener) and OTT app messages (WhatsApp, Telegram).
+-  **Sub-Second On-Device Inference**: Runs TFLite spam model and TRAI DLT header validation without requiring network latency for initial triage.
+- **Localized Persona-Based Guidelines**: RAG agent generates clear advice tailored for Farmers, Students, Seniors, or General Banking customers in English, Hindi, Marathi, Tamil, etc.
+-  **Zero-Trust APK Verification**: Validates application package certificates against official bank allowlists; flags side-loaded counterfeit banking apps.
+-  **Adaptive Intent Friction**: Intercepts high-risk user prompts with hold-to-confirm timers, biometric challenges, and facial liveness verification.
+-  **Fraud Geo-Dashboard & FCM Segment Alerts**: Visualizes active fraud campaigns on interactive maps and dispatches targeted push notifications to affected regions.
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 Ensure your development environment meets the following requirements:
 
@@ -153,7 +153,7 @@ cp local.properties.example local.properties
 
 ---
 
-## 🔐 Environment Variables & Config Guide
+##  Environment Variables & Config Guide
 
 ### Backend Config (`Rag_model/.env`)
 
@@ -182,16 +182,16 @@ Copy `local.properties.example` to `local.properties`. Key parameters include:
 
 ---
 
-## 🛡️ Security, Privacy & DPDP Compliance
+## Security, Privacy & DPDP Compliance
 
-- 🔒 **Data Minimization & Encryption**: All local data stored in Room is encrypted via SQLCipher using keys derived from the Android Keystore.
-- 🛡️ **On-Device PII Protection**: User messages are sanitized on-device and further scrubbed via Microsoft Presidio before reaching external LLMs.
-- 📜 **DPDP Compliance Ledger**: Built-in consent tracking (`UserPreferencesDataStore`) records explicit timestamped user permissions.
-- ⏱️ **Auto-Purge Lifecycle**: Scanned message content is automatically purged after 7 days; transaction audit logs retained up to 30 days.
+- **Data Minimization & Encryption**: All local data stored in Room is encrypted via SQLCipher using keys derived from the Android Keystore.
+- **On-Device PII Protection**: User messages are sanitized on-device and further scrubbed via Microsoft Presidio before reaching external LLMs.
+- **DPDP Compliance Ledger**: Built-in consent tracking (`UserPreferencesDataStore`) records explicit timestamped user permissions.
+- **Auto-Purge Lifecycle**: Scanned message content is automatically purged after 7 days; transaction audit logs retained up to 30 days.
 
 ---
 
-## 🧪 Testing & Quality Assurance
+##  Testing & Quality Assurance
 
 ### Android Unit Tests & Static Analysis
 ```bash
@@ -214,7 +214,7 @@ pytest
 
 ---
 
-## 🤝 Contributing & License
+## Contributing & License
 
 Contributions are welcome! Please ensure all code passes static analysis and unit tests before opening a pull request.
 
