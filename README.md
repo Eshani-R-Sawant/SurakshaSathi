@@ -23,7 +23,7 @@
 
 ---
 
-## 🌟 System Overview
+## System Overview
 
 Fraudsters routinely circulate fake banking APKs and malicious URLs via SMS, WhatsApp, and Telegram, tricking users into revealing sensitive credentials, PINs, and OTPs. **SurakshaSathi** provides a multi-layered defense matrix:
 
