@@ -1,11 +1,5 @@
 # 🛡️ SurakshaSathi (सुरक्षा साथी)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Android-Kotlin%202.0%20%7C%20Jetpack%20Compose-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
-  <img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/AI%2FLLM-Groq%20Llama--3.3%2070B%20%7C%20pgvector-FF6F00?style=for-the-badge&logo=openai&logoColor=white" alt="RAG AI" />
-  <img src="https://img.shields.io/badge/Security-Room%20SQLCipher%20%7C%20Presidio%20PII-blueviolet?style=for-the-badge&logo=shield&logoColor=white" alt="Security" />
-</p>
 
 > **SurakshaSathi** ("Security Companion") is an end-to-end, production-grade mobile security and cybercrime prevention platform designed for digital banking customers. It protects users against fake mobile banking applications (e.g. spoofed YONO SBI apps), SMS/WhatsApp/Telegram phishing, credential/OTP theft, malicious APKs, and fraudulent transaction prompts.
 
