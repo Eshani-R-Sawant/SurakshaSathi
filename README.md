@@ -1,4 +1,4 @@
-#  SurakshaSathi (सुरक्षा साथी)
+#  SurakshaSathi
 
 
 > **SurakshaSathi** ("Security Companion") is an end-to-end, production-grade mobile security and cybercrime prevention platform designed for digital banking customers. It protects users against fake mobile banking applications (e.g. spoofed YONO SBI apps), SMS/WhatsApp/Telegram phishing, credential/OTP theft, malicious APKs, and fraudulent transaction prompts.
